@@ -1,0 +1,22 @@
+From: Andreas Henriksson <ah@debian.org>
+Date: Sun, 9 Dec 2012 23:57:03 -0500
+Subject: _no_gnu_gettext
+
+---
+ configure.ac | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index c6f8c6d..5498585 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -176,9 +176,6 @@ dnl ================================================================
+ 
+ IT_PROG_INTLTOOL([0.50.1])
+ 
+-AM_GNU_GETTEXT_VERSION([0.18])
+-AM_GNU_GETTEXT([external])
+-
+ AC_SUBST([GETTEXT_PACKAGE], [gedit])
+ AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE], "$GETTEXT_PACKAGE", [Define to the gettext package name.])
+ 

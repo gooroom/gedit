@@ -1,0 +1,21 @@
+From: =?utf-8?q?Sebastian_Dr=C3=B6ge?= <slomo@debian.org>
+Date: Sun, 16 Mar 2008 23:39:54 +0000
+Subject: _gedit-bugreport-location
+
+---
+ data/org.gnome.gedit.desktop.in.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/data/org.gnome.gedit.desktop.in.in b/data/org.gnome.gedit.desktop.in.in
+index 2ec2afd..a9f7c80 100644
+--- a/data/org.gnome.gedit.desktop.in.in
++++ b/data/org.gnome.gedit.desktop.in.in
+@@ -14,7 +14,7 @@ X-GNOME-Bugzilla-Bugzilla=GNOME
+ X-GNOME-Bugzilla-Product=gedit
+ X-GNOME-Bugzilla-Component=general
+ X-GNOME-Bugzilla-Version=@VERSION@
+-X-GNOME-Bugzilla-ExtraInfoScript=@FULL_LIBEXECDIR@/gedit/gedit-bugreport.sh
++X-GNOME-Bugzilla-ExtraInfoScript=@prefix@/share/gedit/gedit-bugreport.sh
+ Actions=new-window;new-document;
+ _Keywords=Text;Editor;Plaintext;Write;
+ DBusActivatable=true
