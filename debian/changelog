@@ -1,3 +1,12 @@
+gedit (3.30.2-2+grm2u1) unstable; urgency=medium
+
+  [ subin.kim ]
+  * [facffb45] [Bug:3140]Fixed english only title to none
+
+  [ Gooroom Autobuilder ]
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Wed, 31 Mar 2021 17:59:32 +0900
+
 gedit (3.30.2-2) unstable; urgency=medium
 
   * debian/patches/document-selector-make-search-caseless.patch:
