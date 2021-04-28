@@ -3,3 +3,4 @@
 08_multiarch_fallback.patch
 document-selector-make-search-caseless.patch
 gooroom-clear-headerbar-title.patch
+gooroom-add-plug-in-settings-gschema-and-disable-default.patch
