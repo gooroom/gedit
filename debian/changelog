@@ -1,3 +1,10 @@
+gedit (3.30.2-2+grm2u2) unstable; urgency=medium
+
+  [ donghun ]
+  * [3a73ac79] Add plug-in settings gschema and disable default
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Thu, 06 May 2021 16:44:41 +0900
+
 gedit (3.30.2-2+grm2u1) unstable; urgency=medium
 
   [ subin.kim ]
