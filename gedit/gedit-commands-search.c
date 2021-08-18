@@ -21,9 +21,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "config.h"
 
 #include "gedit-commands.h"
 #include "gedit-commands-private.h"
@@ -31,6 +29,7 @@
 #include <string.h>
 #include <glib/gi18n.h>
 #include <gdk/gdkkeysyms.h>
+#include <tepl/tepl.h>
 
 #include "gedit-debug.h"
 #include "gedit-statusbar.h"
@@ -133,7 +132,7 @@ text_not_found (GeditWindow        *window,
 	gchar *truncated_text;
 
 	search_text = gedit_replace_dialog_get_search_text (replace_dialog);
-	truncated_text = gedit_utils_str_end_truncate (search_text, MAX_MSG_LENGTH);
+	truncated_text = tepl_utils_str_end_truncate (search_text, MAX_MSG_LENGTH);
 
 	gedit_statusbar_flash_message (GEDIT_STATUSBAR (window->priv->statusbar),
 				       window->priv->generic_message_cid,
@@ -174,12 +173,12 @@ forward_search_finished (GtkSourceSearchContext *search_context,
 	GtkTextIter match_start;
 	GtkTextIter match_end;
 
-	found = gtk_source_search_context_forward_finish2 (search_context,
-							   result,
-							   &match_start,
-							   &match_end,
-							   NULL,
-							   NULL);
+	found = gtk_source_search_context_forward_finish (search_context,
+							  result,
+							  &match_start,
+							  &match_end,
+							  NULL,
+							  NULL);
 
 	buffer = gtk_source_search_context_get_buffer (search_context);
 
@@ -189,7 +188,7 @@ forward_search_finished (GtkSourceSearchContext *search_context,
 					      &match_start,
 					      &match_end);
 
-		gedit_view_scroll_to_cursor (view);
+		tepl_view_scroll_to_cursor (TEPL_VIEW (view));
 	}
 	else
 	{
@@ -280,12 +279,12 @@ backward_search_finished (GtkSourceSearchContext *search_context,
 	GtkTextIter match_end;
 	GtkSourceBuffer *buffer;
 
-	found = gtk_source_search_context_backward_finish2 (search_context,
-							    result,
-							    &match_start,
-							    &match_end,
-							    NULL,
-							    NULL);
+	found = gtk_source_search_context_backward_finish (search_context,
+							   result,
+							   &match_start,
+							   &match_end,
+							   NULL,
+							   NULL);
 
 	buffer = gtk_source_search_context_get_buffer (search_context);
 
@@ -295,7 +294,7 @@ backward_search_finished (GtkSourceSearchContext *search_context,
 					      &match_start,
 					      &match_end);
 
-		gedit_view_scroll_to_cursor (view);
+		tepl_view_scroll_to_cursor (TEPL_VIEW (view));
 	}
 	else
 	{
@@ -424,11 +423,11 @@ do_replace (GeditReplaceDialog *dialog,
 
 	gtk_text_buffer_get_selection_bounds (GTK_TEXT_BUFFER (doc), &start, &end);
 
-	gtk_source_search_context_replace2 (search_context,
-					    &start,
-					    &end,
-					    unescaped_replace_text,
-					    -1,
+	gtk_source_search_context_replace (search_context,
+					   &start,
+					   &end,
+					   unescaped_replace_text,
+					   -1,
 					    &error);
 
 	g_free (unescaped_replace_text);

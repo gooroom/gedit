@@ -52,65 +52,22 @@ GeditDocument   *gedit_document_new				(void);
 
 GtkSourceFile	*gedit_document_get_file			(GeditDocument       *doc);
 
-G_DEPRECATED_FOR (gtk_source_file_get_location)
-GFile		*gedit_document_get_location			(GeditDocument       *doc);
-
-G_DEPRECATED_FOR (gtk_source_file_set_location)
-void		 gedit_document_set_location			(GeditDocument       *doc,
-								 GFile               *location);
-
 gchar		*gedit_document_get_uri_for_display		(GeditDocument       *doc);
 
 gchar		*gedit_document_get_short_name_for_display	(GeditDocument       *doc);
 
-G_DEPRECATED
-void		 gedit_document_set_short_name_for_display	(GeditDocument       *doc,
-								 const gchar         *short_name);
-
 gchar		*gedit_document_get_content_type		(GeditDocument       *doc);
 
-G_DEPRECATED
-void		 gedit_document_set_content_type		(GeditDocument       *doc,
-								 const gchar         *content_type);
-
 gchar		*gedit_document_get_mime_type			(GeditDocument       *doc);
-
-G_DEPRECATED_FOR (gtk_source_file_is_readonly)
-gboolean	 gedit_document_get_readonly			(GeditDocument       *doc);
 
 gboolean	 gedit_document_is_untouched			(GeditDocument       *doc);
 
 gboolean	 gedit_document_is_untitled			(GeditDocument       *doc);
 
-G_DEPRECATED_FOR (gtk_source_file_is_local)
-gboolean	 gedit_document_is_local			(GeditDocument       *doc);
-
-G_DEPRECATED
-gboolean	 gedit_document_get_deleted			(GeditDocument       *doc);
-
-gboolean	 gedit_document_goto_line			(GeditDocument       *doc,
-								gint                 line);
-
-gboolean	 gedit_document_goto_line_offset		(GeditDocument       *doc,
-								 gint                 line,
-								 gint                 line_offset);
-
 void 		 gedit_document_set_language			(GeditDocument       *doc,
 								 GtkSourceLanguage   *lang);
 GtkSourceLanguage
 		*gedit_document_get_language			(GeditDocument       *doc);
-
-G_DEPRECATED_FOR (gtk_source_file_get_encoding)
-const GtkSourceEncoding
-		*gedit_document_get_encoding			(GeditDocument       *doc);
-
-G_DEPRECATED_FOR (gtk_source_file_get_newline_type)
-GtkSourceNewlineType
-		 gedit_document_get_newline_type		(GeditDocument       *doc);
-
-G_DEPRECATED_FOR (gtk_source_file_get_compression_type)
-GtkSourceCompressionType
-		 gedit_document_get_compression_type		(GeditDocument       *doc);
 
 gchar		*gedit_document_get_metadata			(GeditDocument       *doc,
 								 const gchar         *key);
@@ -124,6 +81,15 @@ void		 gedit_document_set_search_context		(GeditDocument          *doc,
 
 GtkSourceSearchContext *
 		 gedit_document_get_search_context		(GeditDocument       *doc);
+
+G_DEPRECATED_FOR (tepl_view_goto_line)
+gboolean	 gedit_document_goto_line			(GeditDocument       *doc,
+								 gint                 line);
+
+G_DEPRECATED_FOR (tepl_view_goto_line_offset)
+gboolean	 gedit_document_goto_line_offset		(GeditDocument       *doc,
+								 gint                 line,
+								 gint                 line_offset);
 
 G_END_DECLS
 

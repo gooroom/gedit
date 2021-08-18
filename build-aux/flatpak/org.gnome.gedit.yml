@@ -1,0 +1,87 @@
+---
+app-id: org.gnome.gedit
+runtime: org.gnome.Platform
+runtime-version: master
+sdk: org.gnome.Sdk
+command: gedit
+tags:
+  - nightly
+desktop-file-name-prefix: "(Nightly) "
+
+finish-args:
+  - "--share=ipc"
+  - "--socket=x11"
+  - "--socket=fallback-x11"
+  - "--socket=wayland"
+  - "--metadata=X-DConf=migrate-path=/org/gnome/gedit/"
+  # Needed at least for the integrated file browser plugin:
+  - "--filesystem=host"
+  # For opening files from remote locations (with GVfs):
+  - "--talk-name=org.gtk.vfs.*"
+
+build-options:
+  cflags: "-O2 -g"
+  cxxflags: "-O2 -g"
+  env:
+    V: '1'
+
+cleanup:
+  - "/include"
+  - "/lib/pkgconfig"
+  - "/share/pkgconfig"
+  - "/share/aclocal"
+  - "/man"
+  - "/share/man"
+  - "/share/gtk-doc"
+  - "/share/vala"
+  - "/share/gir-1.0"
+  - "*.la"
+  - "*.a"
+
+modules:
+  - name: libpeas
+    buildsystem: meson
+    config-opts:
+      - "-Dlua51=false"
+      - "-Dvapi=true"
+      - "-Ddemos=false"
+      - "-Dglade_catalog=false"
+    sources:
+      - type: archive
+        url: https://download.gnome.org/sources/libpeas/1.26/libpeas-1.26.0.tar.xz
+        sha256: a976d77e20496479a8e955e6a38fb0e5c5de89cf64d9f44e75c2213ee14f7376
+
+  - name: gspell
+    cleanup:
+      - "/bin"
+    sources:
+      - type: archive
+        url: https://download.gnome.org/sources/gspell/1.8/gspell-1.8.4.tar.xz
+        sha256: cf4d16a716e813449bd631405dc1001ea89537b8cdae2b8abfb3999212bd43b4
+
+  - name: amtk
+    sources:
+      - type: archive
+        url: https://download.gnome.org/sources/amtk/5.2/amtk-5.2.0.tar.xz
+        sha256: 820545bb4cf87ecebc2c3638d6b6e58b8dbd60a419a9b43cf020124e5dad7078
+
+  - name: tepl
+    buildsystem: meson
+    sources:
+      - type: git
+        url: https://gitlab.gnome.org/GNOME/tepl.git
+
+  - name: gedit
+    buildsystem: meson
+    sources:
+      - type: git
+        url: https://gitlab.gnome.org/GNOME/gedit.git
+        # To build a local branch, comment out 'url' and uncomment:
+        # path: ../../
+        # branch: wip/misc
+
+  - name: gedit-plugins
+    buildsystem: meson
+    sources:
+      - type: git
+        url: https://gitlab.gnome.org/GNOME/gedit-plugins.git

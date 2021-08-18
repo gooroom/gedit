@@ -1,6 +1,0 @@
-01_gedit-bugreport-location.patch
-03_no_gnu_gettext.patch
-08_multiarch_fallback.patch
-document-selector-make-search-caseless.patch
-gooroom-clear-headerbar-title.patch
-gooroom-add-plug-in-settings-gschema-and-disable-default.patch

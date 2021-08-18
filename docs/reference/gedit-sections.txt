@@ -2,14 +2,11 @@
 <FILE>gedit-app</FILE>
 <TITLE>GeditApp</TITLE>
 GeditApp
-GeditLockdownMask
-GEDIT_LOCKDOWN_ALL
 gedit_app_create_window
 gedit_app_set_window_title
 gedit_app_get_main_windows
 gedit_app_get_documents
 gedit_app_get_views
-gedit_app_get_lockdown
 gedit_app_process_window_event
 gedit_app_show_help
 <SUBSECTION Standard>
@@ -55,24 +52,15 @@ gedit_commands_save_all_documents
 GeditDocument
 gedit_document_new
 gedit_document_get_file
-gedit_document_get_location
-gedit_document_set_location
 gedit_document_get_uri_for_display
 gedit_document_get_short_name_for_display
-gedit_document_set_short_name_for_display
 gedit_document_get_mime_type
-gedit_document_get_readonly
-gedit_document_is_local
 gedit_document_is_untouched
 gedit_document_is_untitled
-gedit_document_get_deleted
 gedit_document_goto_line
 gedit_document_goto_line_offset
 gedit_document_set_language
-gedit_document_get_newline_type
-gedit_document_get_compression_type
 gedit_document_get_content_type
-gedit_document_set_content_type
 gedit_document_get_metadata
 gedit_document_set_metadata
 gedit_document_set_search_context
@@ -205,9 +193,9 @@ GEDIT_STATUSBAR_GET_CLASS
 
 <SECTION>
 <FILE>gedit-tab</FILE>
-GeditTabState
 <TITLE>GeditTab</TITLE>
 GeditTab
+GeditTabState
 gedit_tab_get_view
 gedit_tab_get_document
 gedit_tab_get_from_document
@@ -225,6 +213,8 @@ gedit_tab_get_type
 GEDIT_TAB_CLASS
 GEDIT_IS_TAB_CLASS
 GEDIT_TAB_GET_CLASS
+GEDIT_TYPE_TAB_STATE
+gedit_tab_state_get_type
 </SECTION>
 
 <SECTION>
@@ -267,10 +257,9 @@ gedit_view_activatable_get_type
 
 <SECTION>
 <FILE>gedit-window</FILE>
-GeditWindowState
-GeditWindowPrivate
 <TITLE>GeditWindow</TITLE>
 GeditWindow
+GeditWindowState
 gedit_window_create_tab
 gedit_window_create_tab_from_location
 gedit_window_create_tab_from_stream
@@ -299,6 +288,9 @@ gedit_window_get_type
 GEDIT_WINDOW_CLASS
 GEDIT_IS_WINDOW_CLASS
 GEDIT_WINDOW_GET_CLASS
+GEDIT_TYPE_WINDOW_STATE
+GeditWindowPrivate
+gedit_window_state_get_type
 </SECTION>
 
 <SECTION>
@@ -335,6 +327,9 @@ gedit_debug_init
 gedit_debug
 gedit_debug_message
 gedit_debug_plugin_message
+<SUBSECTION Standard>
+GEDIT_TYPE_DEBUG_SECTION
+gedit_debug_section_get_type
 </SECTION>
 
 <SECTION>
@@ -358,32 +353,15 @@ gedit_menu_extension_get_type
 
 <SECTION>
 <FILE>gedit-utils</FILE>
-GBOOLEAN_TO_POINTER
-GPOINTER_TO_BOOLEAN
-IS_VALID_BOOLEAN
-gedit_utils_menu_position_under_widget
 gedit_utils_menu_position_under_tree_view
-gedit_utils_escape_underscores
-gedit_utils_str_middle_truncate
 gedit_utils_set_atk_name_description
-gedit_utils_set_atk_relation
-gedit_warning
-gedit_utils_make_valid_utf8
-gedit_utils_uri_get_dirname
-gedit_utils_replace_home_dir_with_tilde
-gedit_utils_get_current_workspace
-gedit_utils_get_window_workspace
-gedit_utils_make_canonical_uri_from_shell_arg
 gedit_utils_basename_for_display
-gedit_utils_decode_uri
 gedit_utils_drop_get_uris
 gedit_utils_get_compression_type_from_content_type
-gedit_utils_get_current_viewport
-gedit_utils_get_ui_objects
-gedit_utils_get_ui_objects_with_translation_domain
 gedit_utils_is_valid_location
 gedit_utils_location_get_dirname_for_display
 gedit_utils_set_direct_save_filename
-gedit_utils_str_end_truncate
 gedit_utils_newline_type_to_string
+gedit_warning
+gedit_utils_decode_uri
 </SECTION>

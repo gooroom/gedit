@@ -21,112 +21,42 @@
  */
 
 #include "gedit-utils.h"
-
 #include <string.h>
 #include <glib/gi18n.h>
-
-/* For the workspace/viewport stuff */
-#ifdef GDK_WINDOWING_X11
-#include <gdk/gdkx.h>
-#include <X11/Xatom.h>
-#endif
-
+#include <tepl/tepl.h>
 #include "gedit-debug.h"
 
-static void
-widget_get_origin (GtkWidget *widget,
-		   gint      *x,
-		   gint      *y)
-
+gboolean
+gedit_utils_menu_position_under_tree_view (GtkTreeView  *tree_view,
+					   GdkRectangle *rect)
 {
-	GdkWindow *window;
-
-	window = gtk_widget_get_window (widget);
-	gdk_window_get_origin (window, x, y);
-}
-
-void
-gedit_utils_menu_position_under_widget (GtkMenu  *menu,
-					gint     *x,
-					gint     *y,
-					gboolean *push_in,
-					gpointer  user_data)
-{
-	GtkWidget *widget;
-	GtkRequisition requisition;
-	GtkAllocation allocation;
-
-	widget = GTK_WIDGET (user_data);
-	widget_get_origin (widget, x, y);
-
-	gtk_widget_get_preferred_size (GTK_WIDGET (menu), &requisition,
-	                               NULL);
-
-	gtk_widget_get_allocation (widget, &allocation);
-
-	if (gtk_widget_get_direction (widget) == GTK_TEXT_DIR_RTL)
-	{
-		*x += allocation.x + allocation.width - requisition.width;
-	}
-	else
-	{
-		*x += allocation.x;
-	}
-
-	*y += allocation.y + allocation.height;
-
-	*push_in = TRUE;
-}
-
-void
-gedit_utils_menu_position_under_tree_view (GtkMenu  *menu,
-					   gint     *x,
-					   gint     *y,
-					   gboolean *push_in,
-					   gpointer  user_data)
-{
-	GtkTreeView *tree = GTK_TREE_VIEW (user_data);
-	GtkTreeModel *model;
 	GtkTreeSelection *selection;
-	GtkTreeIter iter;
+	GtkTreeModel *model;
+	gint count_rows;
+	GList *rows;
+	gint widget_x, widget_y;
 
-	model = gtk_tree_view_get_model (tree);
-	g_return_if_fail (model != NULL);
+	model = gtk_tree_view_get_model (tree_view);
+	g_return_val_if_fail (model != NULL, FALSE);
 
-	selection = gtk_tree_view_get_selection (tree);
-	g_return_if_fail (selection != NULL);
+	selection = gtk_tree_view_get_selection (tree_view);
+	g_return_val_if_fail (selection != NULL, FALSE);
 
-	if (gtk_tree_selection_get_selected (selection, NULL, &iter))
-	{
-		GtkTreePath *path;
-		GdkRectangle rect;
+	count_rows = gtk_tree_selection_count_selected_rows (selection);
+	if (count_rows != 1)
+		return FALSE;
 
-		widget_get_origin (GTK_WIDGET (tree), x, y);
+	rows = gtk_tree_selection_get_selected_rows (selection, &model);
+	gtk_tree_view_get_cell_area (tree_view, (GtkTreePath *)(rows->data),
+				     gtk_tree_view_get_column (tree_view, 0),
+				     rect);
 
-		path = gtk_tree_model_get_path (model, &iter);
-		gtk_tree_view_get_cell_area (tree, path,
-					     gtk_tree_view_get_column (tree, 0), /* FIXME 0 for RTL ? */
-					     &rect);
-		gtk_tree_path_free (path);
+	gtk_tree_view_convert_bin_window_to_widget_coords (tree_view, rect->x, rect->y, &widget_x, &widget_y);
+	rect->x = widget_x;
+	rect->y = widget_y;
 
-		*x += rect.x;
-		*y += rect.y + rect.height;
-
-		if (gtk_widget_get_direction (GTK_WIDGET (tree)) == GTK_TEXT_DIR_RTL)
-		{
-			GtkRequisition requisition;
-			gtk_widget_get_preferred_size (GTK_WIDGET (menu),
-			                               &requisition, NULL);
-			*x += rect.width - requisition.width;
-		}
-	}
-	else
-	{
-		/* no selection -> regular "under widget" positioning */
-		gedit_utils_menu_position_under_widget (menu,
-							x, y, push_in,
-							tree);
-	}
+	g_list_free_full (rows, (GDestroyNotify) gtk_tree_path_free);
+	return TRUE;
 }
 
 /**
@@ -158,39 +88,13 @@ gedit_utils_set_atk_name_description (GtkWidget   *widget,
 }
 
 /**
- * gedit_set_atk_relation:
- * @obj1: specified widget.
- * @obj2: specified widget.
- * @rel_type: the type of relation to set up.
+ * gedit_warning:
+ * @parent:
+ * @format:
+ * @...:
  *
- * This function establishes atk relation
- * between 2 specified widgets.
+ * Deprecated: 3.38: Use tepl_utils_show_warning_dialog() instead.
  */
-void
-gedit_utils_set_atk_relation (GtkWidget       *obj1,
-			      GtkWidget       *obj2,
-			      AtkRelationType  rel_type)
-{
-	AtkObject *atk_obj1, *atk_obj2;
-	AtkRelationSet *relation_set;
-	AtkObject *targets[1];
-	AtkRelation *relation;
-
-	atk_obj1 = gtk_widget_get_accessible (obj1);
-	atk_obj2 = gtk_widget_get_accessible (obj2);
-
-	if (!(GTK_IS_ACCESSIBLE (atk_obj1)) || !(GTK_IS_ACCESSIBLE (atk_obj2)))
-		return;
-
-	relation_set = atk_object_ref_relation_set (atk_obj1);
-	targets[0] = atk_obj2;
-
-	relation = atk_relation_new (targets, 1, rel_type);
-	atk_relation_set_add (relation_set, relation);
-
-	g_object_unref (G_OBJECT (relation));
-}
-
 void
 gedit_warning (GtkWindow *parent, const gchar *format, ...)
 {
@@ -232,174 +136,6 @@ gedit_warning (GtkWindow *parent, const gchar *format, ...)
 	gtk_widget_show (dialog);
 }
 
-/**
- * gedit_utils_escape_underscores:
- * @text: some text.
- * @length: the length.
- *
- * Doubles underscore to avoid spurious menu accels.
- *
- * Returns: the text escaped.
- * Deprecated: 3.18
- */
-gchar *
-gedit_utils_escape_underscores (const gchar *text,
-				gssize       length)
-{
-	GString *str;
-	const gchar *p;
-	const gchar *end;
-
-	g_return_val_if_fail (text != NULL, NULL);
-
-	if (length < 0)
-		length = strlen (text);
-
-	str = g_string_sized_new (length);
-
-	p = text;
-	end = text + length;
-
-	while (p != end)
-	{
-		const gchar *next;
-		next = g_utf8_next_char (p);
-
-		switch (*p)
-		{
-			case '_':
-				g_string_append (str, "__");
-				break;
-			default:
-				g_string_append_len (str, p, next - p);
-				break;
-		}
-
-		p = next;
-	}
-
-	return g_string_free (str, FALSE);
-}
-
-/* the following functions are taken from eel */
-
-static gchar *
-gedit_utils_str_truncate (const gchar *string,
-			  guint        truncate_length,
-			  gboolean     middle)
-{
-	GString     *truncated;
-	guint        length;
-	guint        n_chars;
-	guint        num_left_chars;
-	guint        right_offset;
-	guint        delimiter_length;
-	const gchar *delimiter = "\342\200\246";
-
-	g_return_val_if_fail (string != NULL, NULL);
-
-	length = strlen (string);
-
-	g_return_val_if_fail (g_utf8_validate (string, length, NULL), NULL);
-
-	/* It doesnt make sense to truncate strings to less than
-	 * the size of the delimiter plus 2 characters (one on each
-	 * side)
-	 */
-	delimiter_length = g_utf8_strlen (delimiter, -1);
-	if (truncate_length < (delimiter_length + 2))
-	{
-		return g_strdup (string);
-	}
-
-	n_chars = g_utf8_strlen (string, length);
-
-	/* Make sure the string is not already small enough. */
-	if (n_chars <= truncate_length)
-	{
-		return g_strdup (string);
-	}
-
-	/* Find the 'middle' where the truncation will occur. */
-	if (middle)
-	{
-		num_left_chars = (truncate_length - delimiter_length) / 2;
-		right_offset = n_chars - truncate_length + num_left_chars + delimiter_length;
-
-		truncated = g_string_new_len (string,
-					      g_utf8_offset_to_pointer (string, num_left_chars) - string);
-		g_string_append (truncated, delimiter);
-		g_string_append (truncated, g_utf8_offset_to_pointer (string, right_offset));
-	}
-	else
-	{
-		num_left_chars = truncate_length - delimiter_length;
-		truncated = g_string_new_len (string,
-					      g_utf8_offset_to_pointer (string, num_left_chars) - string);
-		g_string_append (truncated, delimiter);
-	}
-
-	return g_string_free (truncated, FALSE);
-}
-
-gchar *
-gedit_utils_str_middle_truncate (const gchar *string,
-				 guint        truncate_length)
-{
-	return gedit_utils_str_truncate (string, truncate_length, TRUE);
-}
-
-gchar *
-gedit_utils_str_end_truncate (const gchar *string,
-			      guint        truncate_length)
-{
-	return gedit_utils_str_truncate (string, truncate_length, FALSE);
-}
-
-gchar *
-gedit_utils_make_valid_utf8 (const char *name)
-{
-	GString *string;
-	const char *remainder, *invalid;
-	int remaining_bytes, valid_bytes;
-
-	g_return_val_if_fail (name != NULL, NULL);
-
-	string = NULL;
-	remainder = name;
-	remaining_bytes = strlen (name);
-
-	while (remaining_bytes != 0) {
-		if (g_utf8_validate (remainder, remaining_bytes, &invalid))
-		{
-			break;
-		}
-		valid_bytes = invalid - remainder;
-
-		if (string == NULL)
-		{
-			string = g_string_sized_new (remaining_bytes);
-		}
-		g_string_append_len (string, remainder, valid_bytes);
-		/* append U+FFFD REPLACEMENT CHARACTER */
-		g_string_append (string, "\357\277\275");
-
-		remaining_bytes -= valid_bytes + 1;
-		remainder = invalid + 1;
-	}
-
-	if (string == NULL)
-	{
-		return g_strdup (name);
-	}
-
-	g_string_append (string, remainder);
-
-	g_assert (g_utf8_validate (string->str, -1, NULL));
-
-	return g_string_free (string, FALSE);
-}
-
 static gchar *
 uri_get_dirname (const gchar *uri)
 {
@@ -419,26 +155,11 @@ uri_get_dirname (const gchar *uri)
 		return NULL;
 	}
 
-	res = gedit_utils_replace_home_dir_with_tilde (str);
+	res = tepl_utils_replace_home_dir_with_tilde (str);
 
 	g_free (str);
 
 	return res;
-}
-
-/**
- * gedit_utils_uri_get_dirname:
- * @uri: the URI.
- *
- * Note: this function replace home dir with ~.
- *
- * Returns: the directory name.
- * Deprecated: 3.18
- */
-gchar *
-gedit_utils_uri_get_dirname (const gchar *uri)
-{
-	return uri_get_dirname (uri);
 }
 
 /**
@@ -477,10 +198,10 @@ gedit_utils_location_get_dirname_for_display (GFile *location)
 		g_object_unref (mount);
 
 		/* obtain the "path" part of the uri */
-		gedit_utils_decode_uri (uri,
-					NULL, NULL,
-					NULL, NULL,
-					&path);
+		tepl_utils_decode_uri (uri,
+				       NULL, NULL,
+				       NULL, NULL,
+				       &path);
 
 		if (path == NULL)
 		{
@@ -513,231 +234,6 @@ gedit_utils_location_get_dirname_for_display (GFile *location)
 	g_free (uri);
 
 	return res;
-}
-
-gchar *
-gedit_utils_replace_home_dir_with_tilde (const gchar *uri)
-{
-	gchar *tmp;
-	gchar *home;
-
-	g_return_val_if_fail (uri != NULL, NULL);
-
-	/* Note that g_get_home_dir returns a const string */
-	tmp = (gchar *)g_get_home_dir ();
-
-	if (tmp == NULL)
-		return g_strdup (uri);
-
-	home = g_filename_to_utf8 (tmp, -1, NULL, NULL, NULL);
-	if (home == NULL)
-		return g_strdup (uri);
-
-	if (strcmp (uri, home) == 0)
-	{
-		g_free (home);
-
-		return g_strdup ("~/");
-	}
-
-	tmp = home;
-	home = g_strdup_printf ("%s/", tmp);
-	g_free (tmp);
-
-	if (g_str_has_prefix (uri, home))
-	{
-		gchar *res;
-
-		res = g_strdup_printf ("~/%s", uri + strlen (home));
-
-		g_free (home);
-
-		return res;
-	}
-
-	g_free (home);
-
-	return g_strdup (uri);
-}
-
-/* the following two functions are courtesy of galeon */
-
-/**
- * gedit_utils_get_current_workspace:
- * @screen: a #GdkScreen
- *
- * Get the currently visible workspace for the #GdkScreen.
- *
- * If the X11 window property isn't found, 0 (the first workspace)
- * is returned.
- */
-guint
-gedit_utils_get_current_workspace (GdkScreen *screen)
-{
-#ifdef GDK_WINDOWING_X11
-	GdkWindow *root_win;
-	GdkDisplay *display;
-	guint ret = 0;
-
-	g_return_val_if_fail (GDK_IS_SCREEN (screen), 0);
-
-	root_win = gdk_screen_get_root_window (screen);
-	display = gdk_screen_get_display (screen);
-
-	if (GDK_IS_X11_DISPLAY (display))
-	{
-		Atom type;
-		gint format;
-		gulong nitems;
-		gulong bytes_after;
-		guint *current_desktop;
-		gint err, result;
-
-		gdk_error_trap_push ();
-		result = XGetWindowProperty (GDK_DISPLAY_XDISPLAY (display), GDK_WINDOW_XID (root_win),
-					     gdk_x11_get_xatom_by_name_for_display (display, "_NET_CURRENT_DESKTOP"),
-					     0, G_MAXLONG, False, XA_CARDINAL, &type, &format, &nitems,
-					     &bytes_after, (gpointer) &current_desktop);
-		err = gdk_error_trap_pop ();
-
-		if (err != Success || result != Success)
-			return ret;
-
-		if (type == XA_CARDINAL && format == 32 && nitems > 0)
-			ret = current_desktop[0];
-
-		XFree (current_desktop);
-	}
-
-	return ret;
-#else
-	/* FIXME: on mac etc proably there are native APIs
-	 * to get the current workspace etc */
-	return 0;
-#endif
-}
-
-/**
- * gedit_utils_get_window_workspace:
- * @gtkwindow: a #GtkWindow.
- *
- * Get the workspace the window is on.
- *
- * This function gets the workspace that the #GtkWindow is visible on,
- * it returns GEDIT_ALL_WORKSPACES if the window is sticky, or if
- * the window manager doesn't support this function.
- *
- * Returns: the workspace the window is on.
- */
-guint
-gedit_utils_get_window_workspace (GtkWindow *gtkwindow)
-{
-#ifdef GDK_WINDOWING_X11
-	GdkWindow *window;
-	GdkDisplay *display;
-	Atom type;
-	gint format;
-	gulong nitems;
-	gulong bytes_after;
-	guint *workspace;
-	gint err, result;
-	guint ret = GEDIT_ALL_WORKSPACES;
-
-	g_return_val_if_fail (GTK_IS_WINDOW (gtkwindow), 0);
-	g_return_val_if_fail (gtk_widget_get_realized (GTK_WIDGET (gtkwindow)), 0);
-
-	window = gtk_widget_get_window (GTK_WIDGET (gtkwindow));
-	display = gdk_window_get_display (window);
-
-	if (GDK_IS_X11_DISPLAY (display))
-	{
-		gdk_error_trap_push ();
-		result = XGetWindowProperty (GDK_DISPLAY_XDISPLAY (display), GDK_WINDOW_XID (window),
-					     gdk_x11_get_xatom_by_name_for_display (display, "_NET_WM_DESKTOP"),
-					     0, G_MAXLONG, False, XA_CARDINAL, &type, &format, &nitems,
-					     &bytes_after, (gpointer) &workspace);
-		err = gdk_error_trap_pop ();
-
-		if (err != Success || result != Success)
-			return ret;
-
-		if (type == XA_CARDINAL && format == 32 && nitems > 0)
-			ret = workspace[0];
-
-		XFree (workspace);
-	}
-
-	return ret;
-#else
-	/* FIXME: on mac etc proably there are native APIs
-	 * to get the current workspace etc */
-	return 0;
-#endif
-}
-
-/**
- * gedit_utils_get_current_viewport:
- * @screen: a #GdkScreen
- * @x: (out): x-axis point.
- * @y: (out): y-axis point.
- *
- * Get the currently visible viewport origin for the #GdkScreen.
- *
- * If the X11 window property isn't found, (0, 0) is returned.
- */
-void
-gedit_utils_get_current_viewport (GdkScreen    *screen,
-				  gint         *x,
-				  gint         *y)
-{
-#ifdef GDK_WINDOWING_X11
-	GdkWindow *root_win;
-	GdkDisplay *display;
-	Atom type;
-	gint format;
-	gulong nitems;
-	gulong bytes_after;
-	gulong *coordinates;
-	gint err, result;
-
-	g_return_if_fail (GDK_IS_SCREEN (screen));
-	g_return_if_fail (x != NULL && y != NULL);
-
-	/* Default values for the viewport origin */
-	*x = 0;
-	*y = 0;
-
-	root_win = gdk_screen_get_root_window (screen);
-	display = gdk_screen_get_display (screen);
-
-	if (GDK_IS_X11_DISPLAY (display))
-	{
-		gdk_error_trap_push ();
-		result = XGetWindowProperty (GDK_DISPLAY_XDISPLAY (display), GDK_WINDOW_XID (root_win),
-					     gdk_x11_get_xatom_by_name_for_display (display, "_NET_DESKTOP_VIEWPORT"),
-					     0, G_MAXLONG, False, XA_CARDINAL, &type, &format, &nitems,
-					     &bytes_after, (void*) &coordinates);
-		err = gdk_error_trap_pop ();
-
-		if (err != Success || result != Success)
-			return;
-
-		if (type != XA_CARDINAL || format != 32 || nitems < 2)
-		{
-			XFree (coordinates);
-			return;
-		}
-
-		*x = coordinates[0];
-		*y = coordinates[1];
-		XFree (coordinates);
-	}
-#else
-	/* FIXME: on mac etc proably there are native APIs
-	 * to get the current workspace etc */
-	*x = 0;
-	*y = 0;
-#endif
 }
 
 static gboolean
@@ -819,213 +315,6 @@ gedit_utils_is_valid_location (GFile *location)
 	return is_valid;
 }
 
-static GtkWidget *handle_builder_error (const gchar *message, ...) G_GNUC_PRINTF (1, 2);
-
-static GtkWidget *
-handle_builder_error (const gchar *message, ...)
-{
-	GtkWidget *label;
-	gchar *msg;
-	gchar *msg_plain;
-	va_list args;
-
-	va_start (args, message);
-	msg_plain = g_strdup_vprintf (message, args);
-	va_end (args);
-
-	label = gtk_label_new (NULL);
-	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
-
-	msg = g_strconcat ("<span size=\"large\" weight=\"bold\">",
-			   msg_plain, "</span>\n\n",
-			   _("Please check your installation."),
-			   NULL);
-
-	gtk_label_set_markup (GTK_LABEL (label), msg);
-
-	g_free (msg_plain);
-	g_free (msg);
-
-	gtk_widget_set_margin_start (label, 6);
-	gtk_widget_set_margin_end (label, 6);
-	gtk_widget_set_margin_top (label, 6);
-	gtk_widget_set_margin_bottom (label, 6);
-
-	return label;
-}
-
-/* TODO: just add a translation_doamin arg to get_ui_objects method */
-static gboolean
-get_ui_objects_with_translation_domain (const gchar  *filename,
-                                        const gchar  *translation_domain,
-                                        gchar       **root_objects,
-                                        GtkWidget   **error_widget,
-                                        const gchar  *object_name,
-                                        va_list       args)
-{
-	GtkBuilder *builder;
-	const gchar *name;
-	GError *error = NULL;
-	gchar *filename_markup;
-	gboolean ret = TRUE;
-
-	g_return_val_if_fail (filename != NULL, FALSE);
-	g_return_val_if_fail (error_widget != NULL, FALSE);
-	g_return_val_if_fail (object_name != NULL, FALSE);
-
-	filename_markup = g_markup_printf_escaped ("<i>%s</i>", filename);
-	*error_widget = NULL;
-
-	builder = gtk_builder_new ();
-
-	if (translation_domain != NULL)
-	{
-		gtk_builder_set_translation_domain (builder, translation_domain);
-	}
-
-	if (root_objects != NULL)
-	{
-		gtk_builder_add_objects_from_file (builder,
-						   filename,
-						   root_objects,
-						   &error);
-	}
-	else
-	{
-		gtk_builder_add_from_file (builder,
-					   filename,
-					   &error);
-	}
-
-	if (error != NULL)
-	{
-		*error_widget = handle_builder_error (_("Unable to open UI file %s. Error: %s"),
-						      filename_markup,
-						      error->message);
-		g_error_free (error);
-		g_free (filename_markup);
-		g_object_unref (builder);
-
-		return FALSE;
-	}
-
-	for (name = object_name; name; name = va_arg (args, const gchar *))
-	{
-		GObject **gobj;
-
-		gobj = va_arg (args, GObject **);
-		*gobj = gtk_builder_get_object (builder, name);
-
-		if (!*gobj)
-		{
-			*error_widget = handle_builder_error (_("Unable to find the object “%s” inside file %s."),
-							      name,
-							      filename_markup),
-			ret = FALSE;
-			break;
-		}
-
-		/* we return a new ref for the root objects,
-		 * the others are already reffed by their parent root object */
-		if (root_objects != NULL)
-		{
-			gint i;
-
-			for (i = 0; root_objects[i] != NULL; ++i)
-			{
-				if ((strcmp (name, root_objects[i]) == 0))
-				{
-					g_object_ref (*gobj);
-				}
-			}
-		}
-	}
-
-	g_free (filename_markup);
-	g_object_unref (builder);
-
-	return ret;
-}
-
-/**
- * gedit_utils_get_ui_objects:
- * @filename: the path to the gtk builder file
- * @root_objects: a %NULL terminated list of root objects to load or NULL to
- *                load all objects
- * @error_widget: a pointer were a #GtkLabel
- * @object_name: the name of the first object
- * @...: a pointer were the first object is returned, followed by more
- *       name / object pairs and terminated by %NULL.
- *
- * This function gets the requested objects from a GtkBuilder ui file. In case
- * of error it returns %FALSE and sets error_widget to a GtkLabel containing
- * the error message to display.
- *
- * Returns: %FALSE if an error occurs, %TRUE on success.
- * Deprecated: 3.18
- */
-gboolean
-gedit_utils_get_ui_objects (const gchar  *filename,
-			    gchar       **root_objects,
-			    GtkWidget   **error_widget,
-			    const gchar  *object_name,
-			    ...)
-{
-	gboolean ret;
-	va_list args;
-
-	va_start (args, object_name);
-	ret = get_ui_objects_with_translation_domain (filename,
-	                                              NULL,
-	                                              root_objects,
-	                                              error_widget,
-	                                              object_name,
-	                                              args);
-	va_end (args);
-
-	return ret;
-}
-
-/**
- * gedit_utils_get_ui_objects_with_translation_domain:
- * @filename: the path to the gtk builder file
- * @translation_domain: the specific translation domain
- * @root_objects: a %NULL terminated list of root objects to load or NULL to
- *                load all objects
- * @error_widget: a pointer were a #GtkLabel
- * @object_name: the name of the first object
- * @...: a pointer were the first object is returned, followed by more
- *       name / object pairs and terminated by %NULL.
- *
- * This function gets the requested objects from a GtkBuilder ui file. In case
- * of error it returns %FALSE and sets error_widget to a GtkLabel containing
- * the error message to display.
- *
- * Returns: %FALSE if an error occurs, %TRUE on success.
- * Deprecated: 3.18
- */
-gboolean
-gedit_utils_get_ui_objects_with_translation_domain (const gchar  *filename,
-                                                    const gchar  *translation_domain,
-                                                    gchar       **root_objects,
-                                                    GtkWidget   **error_widget,
-                                                    const gchar  *object_name,
-                                                    ...)
-{
-	gboolean ret;
-	va_list args;
-
-	va_start (args, object_name);
-	ret = get_ui_objects_with_translation_domain (filename,
-	                                              translation_domain,
-	                                              root_objects,
-	                                              error_widget,
-	                                              object_name,
-	                                              args);
-	va_end (args);
-
-	return ret;
-}
 
 static gchar *
 make_canonical_uri_from_shell_arg (const gchar *str)
@@ -1066,18 +355,6 @@ make_canonical_uri_from_shell_arg (const gchar *str)
 	return NULL;
 }
 
-/**
- * gedit_utils_make_canonical_uri_from_shell_arg:
- * @str: shell arg.
- *
- * Returns: canonical URI, or %NULL if @str is not a valid URI and/or filename.
- * Deprecated: 3.18
- */
-gchar *
-gedit_utils_make_canonical_uri_from_shell_arg (const gchar *str)
-{
-	return make_canonical_uri_from_shell_arg (str);
-}
 
 /**
  * gedit_utils_basename_for_display:
@@ -1125,7 +402,7 @@ gedit_utils_basename_for_display (GFile *location)
 		}
 	}
 	else if (g_file_has_parent (location, NULL) ||
-	          !gedit_utils_decode_uri (uri, NULL, NULL, &hn, NULL, NULL))
+		 !tepl_utils_decode_uri (uri, NULL, NULL, &hn, NULL, NULL))
 	{
 		/* For remote files with a parent (so not just http://foo.com)
 		   or remote file for which the decoding of the host name fails,
@@ -1147,7 +424,7 @@ gedit_utils_basename_for_display (GFile *location)
 
 		if  (hn != NULL)
 		{
-			hn_utf8 = gedit_utils_make_valid_utf8 (hn);
+			hn_utf8 = g_utf8_make_valid (hn, -1);
 		}
 		else
 		{
@@ -1210,13 +487,6 @@ gedit_utils_drop_get_uris (GtkSelectionData *selection_data)
 	return uri_list;
 }
 
-static void
-null_ptr (gchar **ptr)
-{
-	if (ptr)
-		*ptr = NULL;
-}
-
 /**
  * gedit_utils_decode_uri:
  * @uri: the uri to decode
@@ -1233,6 +503,7 @@ null_ptr (gchar **ptr)
  * all return value pointers should be freed using g_free
  *
  * Return value: %TRUE if the uri could be properly decoded, %FALSE otherwise.
+ * Deprecated: 3.38: Use tepl_utils_decode_uri() instead.
  */
 gboolean
 gedit_utils_decode_uri (const gchar  *uri,
@@ -1242,131 +513,7 @@ gedit_utils_decode_uri (const gchar  *uri,
 			gchar       **port,
 			gchar       **path)
 {
-	/* Largely copied from glib/gio/gdummyfile.c:_g_decode_uri. This
-	 * functionality should be in glib/gio, but for now we implement it
-	 * ourselves (see bug #546182) */
-
-	const char *p, *in, *hier_part_start, *hier_part_end;
-	char *out;
-	char c;
-
-	/* From RFC 3986 Decodes:
-	 * URI = scheme ":" hier-part [ "?" query ] [ "#" fragment ]
-	 */
-
-	p = uri;
-
-	null_ptr (scheme);
-	null_ptr (user);
-	null_ptr (port);
-	null_ptr (host);
-	null_ptr (path);
-
-	/* Decode scheme:
-	 * scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
-	 */
-
-	if (!g_ascii_isalpha (*p))
-		return FALSE;
-
-	while (1)
-	{
-		c = *p++;
-
-		if (c == ':')
-			break;
-
-		if (!(g_ascii_isalnum(c) ||
-		      c == '+' ||
-		      c == '-' ||
-		      c == '.'))
-		{
-			return FALSE;
-		}
-	}
-
-	if (scheme)
-	{
-		*scheme = g_malloc (p - uri);
-		out = *scheme;
-
-		for (in = uri; in < p - 1; in++)
-		{
-			*out++ = g_ascii_tolower (*in);
-		}
-
-		*out = '\0';
-	}
-
-	hier_part_start = p;
-	hier_part_end = p + strlen (p);
-
-	if (hier_part_start[0] == '/' && hier_part_start[1] == '/')
-	{
-		const char *authority_start, *authority_end;
-		const char *userinfo_start, *userinfo_end;
-		const char *host_start, *host_end;
-		const char *port_start;
-
-		authority_start = hier_part_start + 2;
-		/* authority is always followed by / or nothing */
-		authority_end = memchr (authority_start, '/', hier_part_end - authority_start);
-
-		if (authority_end == NULL)
-			authority_end = hier_part_end;
-
-		/* 3.2:
-		 * authority = [ userinfo "@" ] host [ ":" port ]
-		 */
-
-		userinfo_end = memchr (authority_start, '@', authority_end - authority_start);
-
-		if (userinfo_end)
-		{
-			userinfo_start = authority_start;
-
-			if (user)
-				*user = g_uri_unescape_segment (userinfo_start, userinfo_end, NULL);
-
-			if (user && *user == NULL)
-			{
-				if (scheme)
-					g_free (*scheme);
-
-				return FALSE;
-			}
-
-			host_start = userinfo_end + 1;
-		}
-		else
-		{
-			host_start = authority_start;
-		}
-
-		port_start = memchr (host_start, ':', authority_end - host_start);
-
-		if (port_start)
-		{
-			host_end = port_start++;
-
-			if (port)
-				*port = g_strndup (port_start, authority_end - port_start);
-		}
-		else
-		{
-			host_end = authority_end;
-		}
-
-		if (host)
-			*host = g_strndup (host_start, host_end - host_start);
-
-		hier_part_start = authority_end;
-	}
-
-	if (path)
-		*path = g_uri_unescape_segment (hier_part_start, hier_part_end, "/");
-
-	return TRUE;
+	return tepl_utils_decode_uri (uri, scheme, user, host, port, path);
 }
 
 GtkSourceCompressionType

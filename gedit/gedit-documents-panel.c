@@ -18,13 +18,12 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "config.h"
 
 #include "gedit-documents-panel.h"
 
 #include <glib/gi18n.h>
+#include <tepl/tepl.h>
 
 #include "gedit-debug.h"
 #include "gedit-document.h"
@@ -448,7 +447,7 @@ doc_get_name (GeditDocument *doc)
 	name = gedit_document_get_short_name_for_display (doc);
 
 	/* Truncate the name so it doesn't get insanely wide. */
-	docname = gedit_utils_str_middle_truncate (name, MAX_DOC_NAME_LENGTH);
+	docname = tepl_utils_str_middle_truncate (name, MAX_DOC_NAME_LENGTH);
 
 	g_free (name);
 
@@ -1057,7 +1056,7 @@ panel_on_drag_motion (GtkWidget      *widget,
 
 			if (panel->row_placeholder_index < row_placeholder_index)
 			{
-				/* Ajustment because of existing placeholder row */
+				/* Adjustment because of existing placeholder row */
 				row_placeholder_index -= 1;
 			}
 		}
@@ -1506,12 +1505,7 @@ row_on_button_pressed (GtkWidget      *row_event_box,
 					  G_CALLBACK (gtk_widget_destroy),
 					  NULL);
 
-			gtk_menu_popup_for_device (GTK_MENU (menu),
-			                           gdk_event_get_device ((GdkEvent *)event),
-			                           NULL, NULL,
-			                           NULL, NULL, NULL,
-			                           event->button,
-			                           event->time);
+			gtk_menu_popup_at_pointer (GTK_MENU (menu), (GdkEvent *)event);
 
 			return TRUE;
 		}

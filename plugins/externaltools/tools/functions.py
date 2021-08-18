@@ -81,7 +81,7 @@ def run_external_tool(window, panel, node):
     if view is not None:
         # Environment vars relative to current document
         document = view.get_buffer()
-        location = document.get_location()
+        location = document.get_file().get_location()
 
         # Current line number
         piter = document.get_iter_at_mark(document.get_insert())
@@ -97,7 +97,7 @@ def run_external_tool(window, panel, node):
         capture.set_env(GEDIT_CURRENT_LINE=piter.get_text(end))
 
         if document.get_language() is not None:
-            capture.set_env(GEDIT_CURRRENT_DOCUMENT_LANGUAGE=document.get_language().get_id())
+            capture.set_env(GEDIT_CURRENT_DOCUMENT_LANGUAGE=document.get_language().get_id())
 
         # Selected text (only if input is not selection)
         if node.input != 'selection' and node.input != 'selection-document':
@@ -124,9 +124,9 @@ def run_external_tool(window, panel, node):
                 capture.set_env(GEDIT_CURRENT_DOCUMENT_PATH=path,
                                 GEDIT_CURRENT_DOCUMENT_DIR=cwd)
 
-        documents_location = [doc.get_location()
+        documents_location = [doc.get_file().get_location()
                               for doc in window.get_documents()
-                              if doc.get_location() is not None]
+                              if doc.get_file().get_location() is not None]
         documents_uri = [location.get_uri()
                          for location in documents_location
                          if location.get_uri() is not None]
@@ -189,7 +189,7 @@ def run_external_tool(window, panel, node):
             end = start.copy()
             if not start.inside_word():
                 panel.write(_('You must be inside a word to run this command'),
-                            panel.command_tag)
+                            panel.error_tag)
                 return
             if not start.starts_word():
                 start.backward_word_start()
@@ -324,7 +324,7 @@ def capture_end_execute_panel(capture, exit_code, panel, view, output_type):
             mtype, uncertain = Gio.content_type_guess(None, doc.get_text(start, end, False).encode('utf-8'))
             lmanager = GtkSource.LanguageManager.get_default()
 
-            location = doc.get_location()
+            location = doc.get_file().get_location()
             if location:
                 uri = location.get_uri()
             language = lmanager.guess_language(uri, mtype)

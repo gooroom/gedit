@@ -152,10 +152,14 @@ void             _gedit_window_move_tab_to_new_tab_group(GeditWindow         *wi
                                                          GeditTab            *tab);
 gboolean	 _gedit_window_is_removing_tabs		(GeditWindow         *window);
 
-GFile		*_gedit_window_get_default_location 	(GeditWindow         *window);
+const gchar	*_gedit_window_get_file_chooser_folder_uri
+							(GeditWindow          *window,
+							 GtkFileChooserAction  action);
 
-void		 _gedit_window_set_default_location 	(GeditWindow         *window,
-							 GFile               *location);
+void		 _gedit_window_set_file_chooser_folder_uri
+							(GeditWindow          *window,
+							 GtkFileChooserAction  action,
+							 const gchar          *folder_uri);
 
 void		 _gedit_window_fullscreen		(GeditWindow         *window);
 

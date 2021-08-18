@@ -28,12 +28,9 @@
 #include "gedit-view-activatable.h"
 #include "gedit-plugins-engine.h"
 #include "gedit-debug.h"
+#include "gedit-pango.h"
 #include "gedit-utils.h"
 #include "gedit-settings.h"
-#include "gedit-app.h"
-#include "gedit-app-private.h"
-
-#define GEDIT_VIEW_SCROLL_MARGIN 0.02
 
 enum
 {
@@ -43,13 +40,15 @@ enum
 
 struct _GeditViewPrivate
 {
-	GSettings *editor_settings;
 	GtkTextBuffer *current_buffer;
 	PeasExtensionSet *extensions;
 	gchar *direct_save_uri;
+
+	GtkCssProvider *css_provider;
+	PangoFontDescription *font_desc;
 };
 
-G_DEFINE_TYPE_WITH_PRIVATE (GeditView, gedit_view, GTK_SOURCE_TYPE_VIEW)
+G_DEFINE_TYPE_WITH_PRIVATE (GeditView, gedit_view, TEPL_TYPE_VIEW)
 
 enum
 {
@@ -127,8 +126,6 @@ gedit_view_init (GeditView *view)
 
 	view->priv = gedit_view_get_instance_private (view);
 
-	view->priv->editor_settings = g_settings_new ("org.gnome.gedit.preferences.editor");
-
 	/* Drag and drop support */
 	view->priv->direct_save_uri = NULL;
 	target_list = gtk_drag_dest_get_target_list (GTK_WIDGET (view));
@@ -154,8 +151,13 @@ gedit_view_init (GeditView *view)
 			  G_CALLBACK (on_notify_buffer_cb),
 			  NULL);
 
+	view->priv->css_provider = gtk_css_provider_new ();
 	context = gtk_widget_get_style_context (GTK_WIDGET (view));
 	gtk_style_context_add_class (context, "gedit-view");
+
+	gtk_style_context_add_provider (context,
+					GTK_STYLE_PROVIDER (view->priv->css_provider),
+					GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
 
 static void
@@ -164,7 +166,6 @@ gedit_view_dispose (GObject *object)
 	GeditView *view = GEDIT_VIEW (object);
 
 	g_clear_object (&view->priv->extensions);
-	g_clear_object (&view->priv->editor_settings);
 
 	current_buffer_removed (view);
 
@@ -176,21 +177,26 @@ gedit_view_dispose (GObject *object)
 	 */
 	g_signal_handlers_disconnect_by_func (view, on_notify_buffer_cb, NULL);
 
+	g_clear_object (&view->priv->css_provider);
+	g_clear_pointer (&view->priv->font_desc, pango_font_description_free);
+
 	G_OBJECT_CLASS (gedit_view_parent_class)->dispose (object);
 }
 
 static void
 gedit_view_constructed (GObject *object)
 {
-	GeditView *view;
-	GeditViewPrivate *priv;
+	GeditView *view = GEDIT_VIEW (object);
+	GeditSettings *settings;
+	GSettings *editor_settings;
 	gboolean use_default_font;
 
-	view = GEDIT_VIEW (object);
-	priv = view->priv;
+	G_OBJECT_CLASS (gedit_view_parent_class)->constructed (object);
 
-	use_default_font = g_settings_get_boolean (view->priv->editor_settings,
-	                                           GEDIT_SETTINGS_USE_DEFAULT_FONT);
+	settings = _gedit_settings_get_singleton ();
+	editor_settings = _gedit_settings_peek_editor_settings (settings);
+
+	use_default_font = g_settings_get_boolean (editor_settings, GEDIT_SETTINGS_USE_DEFAULT_FONT);
 
 	if (use_default_font)
 	{
@@ -200,88 +206,50 @@ gedit_view_constructed (GObject *object)
 	{
 		gchar *editor_font;
 
-		editor_font = g_settings_get_string (view->priv->editor_settings,
-		                                     GEDIT_SETTINGS_EDITOR_FONT);
-
+		editor_font = g_settings_get_string (editor_settings, GEDIT_SETTINGS_EDITOR_FONT);
 		gedit_view_set_font (view, FALSE, editor_font);
-
 		g_free (editor_font);
 	}
 
-	g_settings_bind (priv->editor_settings,
-	                 GEDIT_SETTINGS_DISPLAY_LINE_NUMBERS,
-	                 view,
-	                 "show-line-numbers",
+	g_settings_bind (editor_settings, GEDIT_SETTINGS_DISPLAY_LINE_NUMBERS,
+	                 view, "show-line-numbers",
 	                 G_SETTINGS_BIND_GET);
 
-	g_settings_bind (priv->editor_settings,
-	                 GEDIT_SETTINGS_AUTO_INDENT,
-	                 view,
-	                 "auto-indent",
+	g_settings_bind (editor_settings, GEDIT_SETTINGS_AUTO_INDENT,
+	                 view, "auto-indent",
 	                 G_SETTINGS_BIND_GET);
 
-	g_settings_bind (priv->editor_settings,
-	                 GEDIT_SETTINGS_TABS_SIZE,
-	                 view,
-	                 "tab-width",
+	g_settings_bind (editor_settings, GEDIT_SETTINGS_TABS_SIZE,
+	                 view, "tab-width",
 	                 G_SETTINGS_BIND_GET);
 
-	g_settings_bind (priv->editor_settings,
-	                 GEDIT_SETTINGS_INSERT_SPACES,
-	                 view,
-	                 "insert-spaces-instead-of-tabs",
+	g_settings_bind (editor_settings, GEDIT_SETTINGS_INSERT_SPACES,
+	                 view, "insert-spaces-instead-of-tabs",
 	                 G_SETTINGS_BIND_GET);
 
-	g_settings_bind (priv->editor_settings,
-	                 GEDIT_SETTINGS_DISPLAY_RIGHT_MARGIN,
-	                 view,
-	                 "show-right-margin",
+	g_settings_bind (editor_settings, GEDIT_SETTINGS_DISPLAY_RIGHT_MARGIN,
+	                 view, "show-right-margin",
 	                 G_SETTINGS_BIND_GET);
 
-	g_settings_bind (priv->editor_settings,
-	                 GEDIT_SETTINGS_BACKGROUND_PATTERN,
-	                 view,
-	                 "background-pattern",
+	g_settings_bind (editor_settings, GEDIT_SETTINGS_BACKGROUND_PATTERN,
+	                 view, "background-pattern",
 	                 G_SETTINGS_BIND_GET);
 
-	g_settings_bind (priv->editor_settings,
-	                 GEDIT_SETTINGS_RIGHT_MARGIN_POSITION,
-	                 view,
-	                 "right-margin-position",
+	g_settings_bind (editor_settings, GEDIT_SETTINGS_RIGHT_MARGIN_POSITION,
+	                 view, "right-margin-position",
 	                 G_SETTINGS_BIND_GET);
 
-	g_settings_bind (priv->editor_settings,
-	                 GEDIT_SETTINGS_HIGHLIGHT_CURRENT_LINE,
-	                 view,
-	                 "highlight-current-line",
+	g_settings_bind (editor_settings, GEDIT_SETTINGS_HIGHLIGHT_CURRENT_LINE,
+	                 view, "highlight-current-line",
 	                 G_SETTINGS_BIND_GET);
 
-	g_settings_bind (priv->editor_settings,
-	                 GEDIT_SETTINGS_WRAP_MODE,
-	                 view,
-	                 "wrap-mode",
+	g_settings_bind (editor_settings, GEDIT_SETTINGS_WRAP_MODE,
+	                 view, "wrap-mode",
 	                 G_SETTINGS_BIND_GET);
 
-	g_settings_bind (priv->editor_settings,
-	                 GEDIT_SETTINGS_SMART_HOME_END,
-	                 view,
-	                 "smart-home-end",
+	g_settings_bind (editor_settings, GEDIT_SETTINGS_SMART_HOME_END,
+	                 view, "smart-home-end",
 	                 G_SETTINGS_BIND_GET);
-
-	gtk_source_view_set_indent_on_tab (GTK_SOURCE_VIEW (view), TRUE);
-
-	G_OBJECT_CLASS (gedit_view_parent_class)->constructed (object);
-}
-
-static gboolean
-gedit_view_focus_out (GtkWidget     *widget,
-		      GdkEventFocus *event)
-{
-	gtk_widget_queue_draw (widget);
-
-	GTK_WIDGET_CLASS (gedit_view_parent_class)->focus_out_event (widget, event);
-
-	return GDK_EVENT_PROPAGATE;
 }
 
 static GdkAtom
@@ -462,6 +430,8 @@ show_line_numbers_menu (GeditView      *view,
 {
 	GtkWidget *menu;
 	GtkWidget *item;
+	GeditSettings *settings;
+	GSettings *editor_settings;
 
 	menu = gtk_menu_new ();
 
@@ -469,10 +439,11 @@ show_line_numbers_menu (GeditView      *view,
 	gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (item),
 					gtk_source_view_get_show_line_numbers (GTK_SOURCE_VIEW (view)));
 
-	g_settings_bind (view->priv->editor_settings,
-			 GEDIT_SETTINGS_DISPLAY_LINE_NUMBERS,
-			 item,
-			 "active",
+	settings = _gedit_settings_get_singleton ();
+	editor_settings = _gedit_settings_peek_editor_settings (settings);
+
+	g_settings_bind (editor_settings, GEDIT_SETTINGS_DISPLAY_LINE_NUMBERS,
+			 item, "active",
 			 G_SETTINGS_BIND_SET);
 
 	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
@@ -483,13 +454,7 @@ show_line_numbers_menu (GeditView      *view,
 			  NULL);
 
 	gtk_widget_show_all (menu);
-	gtk_menu_popup (GTK_MENU (menu),
-			NULL,
-			NULL,
-			NULL,
-			NULL,
-			event->button,
-			event->time);
+	gtk_menu_popup_at_pointer (GTK_MENU (menu), (GdkEvent *)event);
 }
 
 static gboolean
@@ -726,7 +691,6 @@ gedit_view_class_init (GeditViewClass *klass)
 	widget_class->drag_data_received = gedit_view_drag_data_received;
 	widget_class->drag_drop = gedit_view_drag_drop;
 
-	widget_class->focus_out_event = gedit_view_focus_out;
 	widget_class->button_press_event = gedit_view_button_press_event;
 	widget_class->realize = gedit_view_realize;
 	widget_class->unrealize = gedit_view_unrealize;
@@ -801,82 +765,48 @@ gedit_view_new (GeditDocument *doc)
 {
 	g_return_val_if_fail (GEDIT_IS_DOCUMENT (doc), NULL);
 
-	return GTK_WIDGET (g_object_new (GEDIT_TYPE_VIEW, "buffer", doc, NULL));
+	return g_object_new (GEDIT_TYPE_VIEW,
+			     "buffer", doc,
+			     NULL);
 }
 
+/**
+ * gedit_view_cut_clipboard:
+ * @view: a #GeditView.
+ *
+ * Deprecated: 3.38: Use tepl_view_cut_clipboard() instead.
+ */
 void
 gedit_view_cut_clipboard (GeditView *view)
 {
-	GtkTextBuffer *buffer;
-	GtkClipboard *clipboard;
-
-	gedit_debug (DEBUG_VIEW);
-
 	g_return_if_fail (GEDIT_IS_VIEW (view));
-
-	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view));
-
-	clipboard = gtk_widget_get_clipboard (GTK_WIDGET (view),
-	                                      GDK_SELECTION_CLIPBOARD);
-
-	gtk_text_buffer_cut_clipboard (buffer,
-	                               clipboard,
-				       gtk_text_view_get_editable (GTK_TEXT_VIEW (view)));
-
-	gtk_text_view_scroll_to_mark (GTK_TEXT_VIEW (view),
-	                              gtk_text_buffer_get_insert (buffer),
-	                              GEDIT_VIEW_SCROLL_MARGIN,
-	                              FALSE,
-	                              0.0,
-	                              0.0);
+	tepl_view_cut_clipboard (TEPL_VIEW (view));
 }
 
+/**
+ * gedit_view_copy_clipboard:
+ * @view: a #GeditView.
+ *
+ * Deprecated: 3.38: Use tepl_view_copy_clipboard() instead.
+ */
 void
 gedit_view_copy_clipboard (GeditView *view)
 {
-	GtkTextBuffer *buffer;
-	GtkClipboard *clipboard;
-
-	gedit_debug (DEBUG_VIEW);
-
 	g_return_if_fail (GEDIT_IS_VIEW (view));
-
-	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view));
-
-	clipboard = gtk_widget_get_clipboard (GTK_WIDGET (view),
-	                                      GDK_SELECTION_CLIPBOARD);
-
-	gtk_text_buffer_copy_clipboard (buffer, clipboard);
-
-	/* on copy do not scroll, we are already on screen */
+	tepl_view_copy_clipboard (TEPL_VIEW (view));
 }
 
+/**
+ * gedit_view_paste_clipboard:
+ * @view: a #GeditView.
+ *
+ * Deprecated: 3.38: Use tepl_view_paste_clipboard() instead.
+ */
 void
 gedit_view_paste_clipboard (GeditView *view)
 {
-	GtkTextBuffer *buffer;
-	GtkClipboard *clipboard;
-
-	gedit_debug (DEBUG_VIEW);
-
 	g_return_if_fail (GEDIT_IS_VIEW (view));
-
-	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view));
-
-	clipboard = gtk_widget_get_clipboard (GTK_WIDGET (view),
-	                                      GDK_SELECTION_CLIPBOARD);
-
-	gtk_text_buffer_paste_clipboard (buffer,
-	                                 clipboard,
-	                                 NULL,
-					 gtk_text_view_get_editable (GTK_TEXT_VIEW (view)));
-
-	gtk_text_view_scroll_to_mark (GTK_TEXT_VIEW (view),
-	                              gtk_text_buffer_get_insert (buffer),
-	                              GEDIT_VIEW_SCROLL_MARGIN,
-	                              FALSE,
-	                              0.0,
-	                              0.0);
+	tepl_view_paste_clipboard (TEPL_VIEW (view));
 }
 
 /**
@@ -885,28 +815,14 @@ gedit_view_paste_clipboard (GeditView *view)
  *
  * Deletes the text currently selected in the #GtkTextBuffer associated
  * to the view and scroll to the cursor position.
+ *
+ * Deprecated: 3.38: use tepl_view_delete_selection() instead.
  */
 void
 gedit_view_delete_selection (GeditView *view)
 {
-	GtkTextBuffer *buffer;
-
-	gedit_debug (DEBUG_VIEW);
-
 	g_return_if_fail (GEDIT_IS_VIEW (view));
-
-	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view));
-
-	gtk_text_buffer_delete_selection (buffer,
-	                                  TRUE,
-					  gtk_text_view_get_editable (GTK_TEXT_VIEW (view)));
-
-	gtk_text_view_scroll_to_mark (GTK_TEXT_VIEW (view),
-	                              gtk_text_buffer_get_insert (buffer),
-	                              GEDIT_VIEW_SCROLL_MARGIN,
-	                              FALSE,
-	                              0.0,
-	                              0.0);
+	tepl_view_delete_selection (TEPL_VIEW (view));
 }
 
 /**
@@ -914,22 +830,14 @@ gedit_view_delete_selection (GeditView *view)
  * @view: a #GeditView
  *
  * Selects all the text.
+ *
+ * Deprecated: 3.38: use tepl_view_select_all() instead.
  */
 void
 gedit_view_select_all (GeditView *view)
 {
-	GtkTextBuffer *buffer;
-	GtkTextIter start;
-	GtkTextIter end;
-
-	gedit_debug (DEBUG_VIEW);
-
 	g_return_if_fail (GEDIT_IS_VIEW (view));
-
-	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view));
-
-	gtk_text_buffer_get_bounds (buffer, &start, &end);
-	gtk_text_buffer_select_range (buffer, &start, &end);
+	tepl_view_select_all (TEPL_VIEW (view));
 }
 
 /**
@@ -937,24 +845,31 @@ gedit_view_select_all (GeditView *view)
  * @view: a #GeditView
  *
  * Scrolls the @view to the cursor position.
+ *
+ * Deprecated: 3.38: Use tepl_view_scroll_to_cursor() instead.
  */
 void
 gedit_view_scroll_to_cursor (GeditView *view)
 {
-	GtkTextBuffer *buffer;
-
-	gedit_debug (DEBUG_VIEW);
-
 	g_return_if_fail (GEDIT_IS_VIEW (view));
+	tepl_view_scroll_to_cursor (TEPL_VIEW (view));
+}
 
-	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view));
+static void
+update_css_provider (GeditView *view)
+{
+	gchar *str;
+	gchar *css;
 
-	gtk_text_view_scroll_to_mark (GTK_TEXT_VIEW (view),
-	                              gtk_text_buffer_get_insert (buffer),
-	                              0.25,
-	                              FALSE,
-	                              0.0,
-	                              0.0);
+	g_assert (GEDIT_IS_VIEW (view));
+	g_assert (view->priv->font_desc != NULL);
+
+	str = gedit_pango_font_description_to_css (view->priv->font_desc);
+	css = g_strdup_printf ("textview { %s }", str ? str : "");
+	gtk_css_provider_load_from_data (view->priv->css_provider, css, -1, NULL);
+
+	g_free (css);
+	g_free (str);
 }
 
 /**
@@ -971,35 +886,33 @@ gedit_view_set_font (GeditView   *view,
 		     gboolean     default_font,
 		     const gchar *font_name)
 {
-	PangoFontDescription *font_desc;
-
 	gedit_debug (DEBUG_VIEW);
 
 	g_return_if_fail (GEDIT_IS_VIEW (view));
+
+	g_clear_pointer (&view->priv->font_desc, pango_font_description_free);
 
 	if (default_font)
 	{
 		GeditSettings *settings;
 		gchar *font;
 
-		settings = _gedit_app_get_settings (GEDIT_APP (g_application_get_default ()));
+		settings = _gedit_settings_get_singleton ();
 		font = gedit_settings_get_system_font (settings);
 
-		font_desc = pango_font_description_from_string (font);
+		view->priv->font_desc = pango_font_description_from_string (font);
 		g_free (font);
 	}
 	else
 	{
 		g_return_if_fail (font_name != NULL);
 
-		font_desc = pango_font_description_from_string (font_name);
+		view->priv->font_desc = pango_font_description_from_string (font_name);
 	}
 
-	g_return_if_fail (font_desc != NULL);
+	g_return_if_fail (view->priv->font_desc != NULL);
 
-	gtk_widget_override_font (GTK_WIDGET (view), font_desc);
-
-	pango_font_description_free (font_desc);
+	update_css_provider (view);
 }
 
 /* ex:set ts=8 noet: */

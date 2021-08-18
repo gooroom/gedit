@@ -23,7 +23,7 @@
 #include "gedit-print-job.h"
 
 #include <glib/gi18n.h>
-#include <gtksourceview/gtksource.h>
+#include <tepl/tepl.h>
 
 #include "gedit-debug.h"
 #include "gedit-print-preview.h"
@@ -366,9 +366,9 @@ custom_widget_apply_cb (GtkPrintOperation *operation,
 
 	syntax = gtk_toggle_button_get_active (job->syntax_checkbutton);
 	page_header = gtk_toggle_button_get_active (job->page_header_checkbutton);
-	body_font = gtk_font_button_get_font_name (job->body_fontbutton);
-	header_font = gtk_font_button_get_font_name (job->headers_fontbutton);
-	numbers_font = gtk_font_button_get_font_name (job->numbers_fontbutton);
+	body_font = gtk_font_chooser_get_font (GTK_FONT_CHOOSER (job->body_fontbutton));
+	header_font = gtk_font_chooser_get_font (GTK_FONT_CHOOSER (job->headers_fontbutton));
+	numbers_font = gtk_font_chooser_get_font (GTK_FONT_CHOOSER (job->numbers_fontbutton));
 
 	g_settings_set_boolean (job->gsettings,
 				GEDIT_SETTINGS_PRINT_SYNTAX_HIGHLIGHTING,
@@ -534,7 +534,7 @@ create_compositor (GeditPrintJob *job)
 		gchar *left;
 
 		doc_name = gedit_document_get_uri_for_display (GEDIT_DOCUMENT (buf));
-		name_to_display = gedit_utils_str_middle_truncate (doc_name, 60);
+		name_to_display = tepl_utils_str_middle_truncate (doc_name, 60);
 
 		left = g_strdup_printf (_("File: %s"), name_to_display);
 

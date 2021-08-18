@@ -18,27 +18,24 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "config.h"
 
 #include "gedit-app.h"
-#ifdef OS_OSX
-#include "gedit-app-osx.h"
-#else
-#ifdef G_OS_WIN32
-#include "gedit-app-win32.h"
-#else
-#include "gedit-app-x11.h"
-#endif
+
+#if defined OS_OSX
+#  include "gedit-app-osx.h"
+#elif defined G_OS_WIN32
+#  include "gedit-app-win32.h"
 #endif
 
-#include <glib.h>
 #include <locale.h>
 #include <libintl.h>
+#include <tepl/tepl.h>
 
 #include "gedit-dirs.h"
 #include "gedit-debug.h"
+#include "gedit-factory.h"
+#include "gedit-settings.h"
 
 #ifdef G_OS_WIN32
 #include <gmodule.h>
@@ -65,7 +62,7 @@ gedit_w32_load_private_dll (void)
 		 * But since we only have one library, and its name is known, may as well
 		 * use gmodule.
 		 */
-		dllpath = g_build_filename (prefix, "lib", "gedit", "libgedit.dll", NULL);
+		dllpath = g_build_filename (prefix, "lib", "gedit", "lib" PACKAGE_STRING ".dll", NULL);
 		g_free (prefix);
 
 		libgedit_dll = g_module_open (dllpath, 0);
@@ -80,10 +77,10 @@ gedit_w32_load_private_dll (void)
 
 	if (libgedit_dll == NULL)
 	{
-		libgedit_dll = g_module_open ("libgedit.dll", 0);
+		libgedit_dll = g_module_open ("lib" PACKAGE_STRING ".dll", 0);
 		if (libgedit_dll == NULL)
 		{
-			g_printerr ("Failed to load 'libgedit.dll': %s\n",
+			g_printerr ("Failed to load 'lib" PACKAGE_STRING ".dll': %s\n",
 			            g_module_error ());
 		}
 	}
@@ -100,36 +97,13 @@ gedit_w32_unload_private_dll (void)
 		libgedit_dll = NULL;
 	}
 }
-#endif
+#endif /* G_OS_WIN32 */
 
-int
-main (int argc, char *argv[])
+static void
+setup_i18n (void)
 {
-	GType type;
-	GeditApp *app;
-	gint status;
 	const gchar *dir;
 
-#ifdef OS_OSX
-	type = GEDIT_TYPE_APP_OSX;
-#else
-#ifdef G_OS_WIN32
-	if (!gedit_w32_load_private_dll ())
-	{
-		return 1;
-	}
-
-	type = GEDIT_TYPE_APP_WIN32;
-#else
-	type = GEDIT_TYPE_APP_X11;
-#endif
-#endif
-
-	/* NOTE: we should not make any calls to the gedit api before the
-	 * private library is loaded */
-	gedit_dirs_init ();
-
-	/* Setup locale/gettext */
 	setlocale (LC_ALL, "");
 
 	dir = gedit_dirs_get_gedit_locale_dir ();
@@ -137,6 +111,38 @@ main (int argc, char *argv[])
 
 	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
 	textdomain (GETTEXT_PACKAGE);
+}
+
+int
+main (int argc, char *argv[])
+{
+	GType type;
+	GeditFactory *factory;
+	GeditApp *app;
+	gint status;
+
+#if defined OS_OSX
+	type = GEDIT_TYPE_APP_OSX;
+#elif defined G_OS_WIN32
+	if (!gedit_w32_load_private_dll ())
+	{
+		return 1;
+	}
+
+	type = GEDIT_TYPE_APP_WIN32;
+#else
+	type = GEDIT_TYPE_APP;
+#endif
+
+	/* NOTE: we should not make any calls to the gedit API before the
+	 * private library is loaded.
+	 */
+	gedit_dirs_init ();
+
+	setup_i18n ();
+	tepl_init ();
+	factory = gedit_factory_new ();
+	tepl_abstract_factory_set_singleton (TEPL_ABSTRACT_FACTORY (factory));
 
 	app = g_object_new (type,
 	                    "application-id", "org.gnome.gedit",
@@ -144,6 +150,8 @@ main (int argc, char *argv[])
 	                    NULL);
 
 	status = g_application_run (G_APPLICATION (app), argc, argv);
+
+	gedit_settings_unref_singleton ();
 
 	/* Break reference cycles caused by the PeasExtensionSet
 	 * for GeditAppActivatable which holds a ref on the GeditApp
@@ -158,6 +166,9 @@ main (int argc, char *argv[])
 		gedit_debug_message (DEBUG_APP, "Leaking with %i refs",
 		                     G_OBJECT (app)->ref_count);
 	}
+
+	tepl_finalize ();
+	gedit_dirs_shutdown ();
 
 #ifdef G_OS_WIN32
 	gedit_w32_unload_private_dll ();

@@ -21,17 +21,15 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "config.h"
 
 #include "gedit-commands.h"
 #include "gedit-commands-private.h"
 
 #include <glib/gi18n.h>
-#include <gio/gio.h>
-#include <gtk/gtk.h>
+#include <tepl/tepl.h>
 
+#include "gedit-app.h"
 #include "gedit-debug.h"
 #include "gedit-document.h"
 #include "gedit-document-private.h"
@@ -43,17 +41,17 @@
 #include "gedit-statusbar.h"
 #include "gedit-utils.h"
 #include "gedit-file-chooser-dialog.h"
+#include "gedit-file-chooser-open.h"
 #include "gedit-close-confirmation-dialog.h"
 
-#define GEDIT_OPEN_DIALOG_KEY "gedit-open-dialog-key"
+/* useful macro */
+#define GBOOLEAN_TO_POINTER(i) (GINT_TO_POINTER ((i) ? 2 : 1))
+#define GPOINTER_TO_BOOLEAN(i) ((gboolean) ((GPOINTER_TO_INT(i) == 2) ? TRUE : FALSE))
+
 #define GEDIT_IS_CLOSING_ALL "gedit-is-closing-all"
 #define GEDIT_NOTEBOOK_TO_CLOSE "gedit-notebook-to-close"
 #define GEDIT_IS_QUITTING "gedit-is-quitting"
 #define GEDIT_IS_QUITTING_ALL "gedit-is-quitting-all"
-
-static void tab_state_changed_while_saving (GeditTab    *tab,
-					    GParamSpec  *pspec,
-					    GeditWindow *window);
 
 void
 _gedit_cmd_file_new (GSimpleAction *action,
@@ -152,26 +150,24 @@ load_file_list (GeditWindow             *window,
 		{
 			if (l == files)
 			{
-				GeditDocument *doc;
+				TeplView *view;
 
 				gedit_window_set_active_tab (window, tab);
 				jump_to = FALSE;
-				doc = gedit_tab_get_document (tab);
+				view = TEPL_VIEW (gedit_tab_get_view (tab));
 
 				if (line_pos > 0)
 				{
 					if (column_pos > 0)
 					{
-						gedit_document_goto_line_offset (doc,
-						                                 line_pos - 1,
-						                                 column_pos - 1);
+						tepl_view_goto_line_offset (view,
+									    line_pos - 1,
+									    column_pos - 1);
 					}
 					else
 					{
-						gedit_document_goto_line (doc, line_pos - 1);
+						tepl_view_goto_line (view, line_pos - 1);
 					}
-
-					gedit_view_scroll_to_cursor (gedit_tab_get_view (tab));
 				}
 			}
 
@@ -361,59 +357,43 @@ _gedit_cmd_load_files_from_prompt (GeditWindow             *window,
 }
 
 static void
-open_dialog_destroyed (GeditWindow            *window,
-		       GeditFileChooserDialog *dialog)
-{
-	gedit_debug (DEBUG_COMMANDS);
-
-	g_object_set_data (G_OBJECT (window),
-			   GEDIT_OPEN_DIALOG_KEY,
-			   NULL);
-}
-
-static void
-open_dialog_response_cb (GeditFileChooserDialog *dialog,
-                         gint                    response_id,
-                         GeditWindow            *window)
+file_chooser_open_done_cb (GeditFileChooserOpen *file_chooser,
+			   gboolean              accept,
+			   GeditWindow          *window)
 {
 	GSList *files;
 	const GtkSourceEncoding *encoding;
-	GSList *loaded;
+	gchar *folder_uri;
+	GSList *loaded_documents;
 
 	gedit_debug (DEBUG_COMMANDS);
 
-	if (response_id != GTK_RESPONSE_OK)
+	if (!accept)
 	{
-		gedit_file_chooser_dialog_destroy (dialog);
+		g_object_unref (file_chooser);
 		return;
 	}
 
-	files = gedit_file_chooser_dialog_get_files (dialog);
-	g_return_if_fail (files != NULL);
-
-	encoding = gedit_file_chooser_dialog_get_encoding (dialog);
-
-	gedit_file_chooser_dialog_destroy (dialog);
+	files = _gedit_file_chooser_open_get_files (file_chooser);
+	encoding = _gedit_file_chooser_get_encoding (GEDIT_FILE_CHOOSER (file_chooser));
+	folder_uri = _gedit_file_chooser_get_current_folder_uri (GEDIT_FILE_CHOOSER (file_chooser));
+	g_object_unref (file_chooser);
 
 	if (window == NULL)
 	{
-		window = gedit_app_create_window (GEDIT_APP (g_application_get_default ()),
-		                                  NULL);
+		window = gedit_app_create_window (GEDIT_APP (g_application_get_default ()), NULL);
 
 		gtk_widget_show (GTK_WIDGET (window));
 		gtk_window_present (GTK_WINDOW (window));
 	}
 
-	/* Remember the folder we navigated to */
-	_gedit_window_set_default_location (window, files->data);
+	/* Remember the folder we navigated to. */
+	_gedit_window_set_file_chooser_folder_uri (window, GTK_FILE_CHOOSER_ACTION_OPEN, folder_uri);
+	g_free (folder_uri);
 
-	loaded = gedit_commands_load_locations (window,
-	                                        files,
-	                                        encoding,
-	                                        0,
-	                                        0);
+	loaded_documents = gedit_commands_load_locations (window, files, encoding, 0, 0);
 
-	g_slist_free (loaded);
+	g_slist_free (loaded_documents);
 	g_slist_free_full (files, g_object_unref);
 }
 
@@ -423,93 +403,38 @@ _gedit_cmd_file_open (GSimpleAction *action,
                       gpointer       user_data)
 {
 	GeditWindow *window = NULL;
-	GeditFileChooserDialog *open_dialog;
-
-	if (GEDIT_IS_WINDOW (user_data))
-	{
-		window = user_data;
-	}
+	GeditFileChooserOpen *file_chooser;
 
 	gedit_debug (DEBUG_COMMANDS);
 
-	if (window != NULL)
+	if (user_data != NULL)
 	{
-		gpointer data;
-
-		data = g_object_get_data (G_OBJECT (window), GEDIT_OPEN_DIALOG_KEY);
-
-		if (data != NULL)
-		{
-			g_return_if_fail (GEDIT_IS_FILE_CHOOSER_DIALOG (data));
-
-			gedit_file_chooser_dialog_show (GEDIT_FILE_CHOOSER_DIALOG (data));
-
-			return;
-		}
-
-		/* FIXME: this should be in GeditWindow. */
-		gtk_widget_hide (GTK_WIDGET (window->priv->open_document_popover));
-		gtk_widget_hide (GTK_WIDGET (window->priv->fullscreen_open_document_popover));
+		window = GEDIT_WINDOW (user_data);
 	}
 
-	/* Translators: "Open" is the title of the file chooser window. */
-	open_dialog = gedit_file_chooser_dialog_create (C_("window title", "Open"),
-							window != NULL ? GTK_WINDOW (window) : NULL,
-							GEDIT_FILE_CHOOSER_OPEN |
-							GEDIT_FILE_CHOOSER_ENABLE_ENCODING |
-							GEDIT_FILE_CHOOSER_ENABLE_DEFAULT_FILTERS,
-							NULL,
-							_("_Cancel"), GTK_RESPONSE_CANCEL,
-							_("_Open"), GTK_RESPONSE_OK);
+	file_chooser = _gedit_file_chooser_open_new ();
 
 	if (window != NULL)
 	{
-		GeditDocument *doc;
-		GFile *default_path = NULL;
+		const gchar *folder_uri;
 
-		/* The file chooser dialog for opening files is not modal, so
-		 * ensure that at most one file chooser is opened.
-		 */
-		g_object_set_data (G_OBJECT (window),
-				   GEDIT_OPEN_DIALOG_KEY,
-				   open_dialog);
+		_gedit_file_chooser_set_transient_for (GEDIT_FILE_CHOOSER (file_chooser),
+						       GTK_WINDOW (window));
 
-		g_object_weak_ref (G_OBJECT (open_dialog),
-				   (GWeakNotify) open_dialog_destroyed,
-				   window);
-
-		/* Set the current folder */
-		doc = gedit_window_get_active_document (window);
-
-		if (doc != NULL)
+		folder_uri = _gedit_window_get_file_chooser_folder_uri (window, GTK_FILE_CHOOSER_ACTION_OPEN);
+		if (folder_uri != NULL)
 		{
-			GtkSourceFile *file = gedit_document_get_file (doc);
-			GFile *location = gtk_source_file_get_location (file);
-
-			if (location != NULL)
-			{
-				default_path = g_file_get_parent (location);
-			}
-		}
-
-		if (default_path == NULL)
-		{
-			default_path = _gedit_window_get_default_location (window);
-		}
-
-		if (default_path != NULL)
-		{
-			gedit_file_chooser_dialog_set_current_folder (open_dialog, default_path);
-			g_object_unref (default_path);
+			_gedit_file_chooser_set_current_folder_uri (GEDIT_FILE_CHOOSER (file_chooser),
+								    folder_uri);
 		}
 	}
 
-	g_signal_connect (open_dialog,
-			  "response",
-			  G_CALLBACK (open_dialog_response_cb),
+	g_signal_connect (file_chooser,
+			  "done",
+			  G_CALLBACK (file_chooser_open_done_cb),
 			  window);
 
-	gedit_file_chooser_dialog_show (open_dialog);
+	_gedit_file_chooser_show (GEDIT_FILE_CHOOSER (file_chooser));
 }
 
 void
@@ -548,7 +473,7 @@ replace_read_only_file (GtkWindow *parent,
 	 * though the dialog uses wrapped text, if the name doesn't contain
 	 * white space then the text-wrapping code is too stupid to wrap it.
 	 */
-	name_for_display = gedit_utils_str_middle_truncate (parse_name, 50);
+	name_for_display = tepl_utils_str_middle_truncate (parse_name, 50);
 	g_free (parse_name);
 
 	dialog = gtk_message_dialog_new (parent,
@@ -600,7 +525,7 @@ change_compression (GtkWindow *parent,
 	 * though the dialog uses wrapped text, if the name doesn't contain
 	 * white space then the text-wrapping code is too stupid to wrap it.
 	 */
-	name_for_display = gedit_utils_str_middle_truncate (parse_name, 50);
+	name_for_display = tepl_utils_str_middle_truncate (parse_name, 50);
 	g_free (parse_name);
 
 	if (compressed)
@@ -705,7 +630,7 @@ save_dialog_response_cb (GeditFileChooserDialog *dialog,
 	tab = g_task_get_source_object (task);
 	window = g_task_get_task_data (task);
 
-	if (response_id != GTK_RESPONSE_OK)
+	if (response_id != GTK_RESPONSE_ACCEPT)
 	{
 		gedit_file_chooser_dialog_destroy (dialog);
 		g_task_return_boolean (task, FALSE);
@@ -755,7 +680,23 @@ save_dialog_response_cb (GeditFileChooserDialog *dialog,
 	g_free (parse_name);
 
 	/* Let's remember the dir we navigated to, even if the saving fails... */
-	_gedit_window_set_default_location (window, location);
+	{
+		GFile *folder;
+
+		folder = g_file_get_parent (location);
+		if (folder != NULL)
+		{
+			gchar *folder_uri;
+
+			folder_uri = g_file_get_uri (folder);
+			_gedit_window_set_file_chooser_folder_uri (window,
+								   GTK_FILE_CHOOSER_ACTION_SAVE,
+								   folder_uri);
+
+			g_object_unref (folder);
+			g_free (folder_uri);
+		}
+	}
 
 	_gedit_tab_save_as_async (tab,
 				  location,
@@ -846,13 +787,8 @@ save_as_tab_async (GeditTab            *tab,
 	/* Translators: "Save As" is the title of the file chooser window. */
 	save_dialog = gedit_file_chooser_dialog_create (C_("window title", "Save As"),
 							GTK_WINDOW (window),
-							GEDIT_FILE_CHOOSER_SAVE |
-							GEDIT_FILE_CHOOSER_ENABLE_ENCODING |
-							GEDIT_FILE_CHOOSER_ENABLE_LINE_ENDING |
-							GEDIT_FILE_CHOOSER_ENABLE_DEFAULT_FILTERS,
-							NULL,
-							_("_Cancel"), GTK_RESPONSE_CANCEL,
-							_("_Save"), GTK_RESPONSE_OK);
+							_("_Save"),
+							_("_Cancel"));
 
 	gedit_file_chooser_dialog_set_do_overwrite_confirmation (save_dialog, TRUE);
 
@@ -884,23 +820,32 @@ save_as_tab_async (GeditTab            *tab,
 	}
 	else
 	{
-		GFile *default_path;
+		const gchar *default_folder_uri;
+		GFile *default_folder;
 		gchar *docname;
 
-		default_path = _gedit_window_get_default_location (window);
-		docname = gedit_document_get_short_name_for_display (doc);
-
-		if (default_path != NULL)
+		default_folder_uri = _gedit_window_get_file_chooser_folder_uri (window,
+										GTK_FILE_CHOOSER_ACTION_SAVE);
+		if (default_folder_uri != NULL)
 		{
-			gedit_file_chooser_dialog_set_current_folder (save_dialog,
-								      default_path);
-
-			g_object_unref (default_path);
+			default_folder = g_file_new_for_uri (default_folder_uri);
+		}
+		else
+		{
+			/* It's logical to take the home dir by default, and it fixes
+			 * a problem on MS Windows (hang in C:\windows\system32).
+			 *
+			 * FIXME: it would be better to use GtkFileChooserNative
+			 * to permanently fix the hang problem on MS Windows.
+			 */
+			default_folder = g_file_new_for_path (g_get_home_dir ());
 		}
 
-		gedit_file_chooser_dialog_set_current_name (save_dialog,
-							    docname);
+		gedit_file_chooser_dialog_set_current_folder (save_dialog, default_folder);
+		g_object_unref (default_folder);
 
+		docname = gedit_document_get_short_name_for_display (doc);
+		gedit_file_chooser_dialog_set_current_name (save_dialog, docname);
 		g_free (docname);
 	}
 

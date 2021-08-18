@@ -21,14 +21,15 @@
 #ifndef GEDIT_FILE_CHOOSER_DIALOG_H
 #define GEDIT_FILE_CHOOSER_DIALOG_H
 
-#include <gtk/gtk.h>
 #include <gtksourceview/gtksource.h>
 
 G_BEGIN_DECLS
 
 #define GEDIT_TYPE_FILE_CHOOSER_DIALOG (gedit_file_chooser_dialog_get_type ())
 
-G_DECLARE_INTERFACE (GeditFileChooserDialog, gedit_file_chooser_dialog, GEDIT, FILE_CHOOSER_DIALOG, GObject)
+G_DECLARE_INTERFACE (GeditFileChooserDialog, gedit_file_chooser_dialog,
+		     GEDIT, FILE_CHOOSER_DIALOG,
+		     GObject)
 
 struct _GeditFileChooserDialogInterface
 {
@@ -58,14 +59,11 @@ struct _GeditFileChooserDialogInterface
 
 	GFile *	(*get_file)		(GeditFileChooserDialog *dialog);
 
-	GSList *(*get_files)		(GeditFileChooserDialog *dialog);
-
 	void	(*set_do_overwrite_confirmation)
 					(GeditFileChooserDialog *dialog,
 					 gboolean                overwrite_confirmation);
 
 	void	(*show)			(GeditFileChooserDialog *dialog);
-	void	(*hide)			(GeditFileChooserDialog *dialog);
 
 	void    (*destroy)		(GeditFileChooserDialog *dialog);
 
@@ -74,30 +72,13 @@ struct _GeditFileChooserDialogInterface
 
 	GtkWindow *
 		(*get_window)		(GeditFileChooserDialog *dialog);
-
-	void	(*add_pattern_filter)	(GeditFileChooserDialog *dilaog,
-					 const gchar            *name,
-					 const gchar            *pattern);
 };
-
-typedef enum
-{
-	GEDIT_FILE_CHOOSER_SAVE                   = 1 << 0,
-	GEDIT_FILE_CHOOSER_OPEN                   = 1 << 1,
-	GEDIT_FILE_CHOOSER_ENABLE_ENCODING        = 1 << 2,
-	GEDIT_FILE_CHOOSER_ENABLE_LINE_ENDING     = 1 << 3,
-	GEDIT_FILE_CHOOSER_ENABLE_DEFAULT_FILTERS = 1 << 4
-} GeditFileChooserFlags;
 
 GeditFileChooserDialog *
 		gedit_file_chooser_dialog_create		(const gchar              *title,
 								 GtkWindow                *parent,
-								 GeditFileChooserFlags     flags,
-								 const GtkSourceEncoding  *encoding,
-								 const gchar              *cancel_label,
-								 GtkResponseType           cancel_response,
 								 const gchar              *accept_label,
-								 GtkResponseType           accept_response);
+								 const gchar              *cancel_label);
 
 void		 gedit_file_chooser_dialog_destroy		(GeditFileChooserDialog   *dialog);
 
@@ -124,23 +105,16 @@ void		 gedit_file_chooser_dialog_set_file		(GeditFileChooserDialog   *dialog,
 
 GFile		*gedit_file_chooser_dialog_get_file		(GeditFileChooserDialog   *dialog);
 
-GSList		*gedit_file_chooser_dialog_get_files		(GeditFileChooserDialog   *dialog);
-
 void		 gedit_file_chooser_dialog_set_do_overwrite_confirmation (
 								 GeditFileChooserDialog   *dialog,
 								 gboolean                  overwrite_confirmation);
 
 void		 gedit_file_chooser_dialog_show			(GeditFileChooserDialog   *dialog);
-void		 gedit_file_chooser_dialog_hide			(GeditFileChooserDialog   *dialog);
 
 void		 gedit_file_chooser_dialog_set_modal		(GeditFileChooserDialog   *dialog,
 								 gboolean                  is_modal);
 
 GtkWindow	*gedit_file_chooser_dialog_get_window		(GeditFileChooserDialog   *dialog);
-
-void		 gedit_file_chooser_dialog_add_pattern_filter	(GeditFileChooserDialog   *dialog,
-								 const gchar              *name,
-								 const gchar              *pattern);
 
 G_END_DECLS
 

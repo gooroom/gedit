@@ -20,9 +20,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "config.h"
 
 #include "gedit-commands.h"
 #include "gedit-commands-private.h"
@@ -90,9 +88,9 @@ _gedit_cmd_help_about (GeditWindow *window)
 		"Jesse van den Kieboom <jessevdk@gnome.org>",
 		"Paolo Borelli <pborelli@gnome.org>",
 		"Paolo Maggi <paolo@gnome.org>",
-		"S\303\251bastien Lafargue <slafargue@gnome.org>",
-		"S\303\251bastien Wilmet <swilmet@gnome.org>",
-		"Steve Fr\303\251cinaux <steve@istique.net>",
+		"Sébastien Lafargue <slafargue@gnome.org>",
+		"Sébastien Wilmet <swilmet@gnome.org>",
+		"Steve Frécinaux <steve@istique.net>",
 		NULL
 	};
 
@@ -104,38 +102,21 @@ _gedit_cmd_help_about (GeditWindow *window)
 		NULL
 	};
 
-	static const gchar copyright[] = "Copyright \xc2\xa9 1998-2017 - the gedit team";
-
-	static const gchar comments[] = \
-		N_("gedit is a small and lightweight text editor for the GNOME Desktop");
-
-	GdkPixbuf *logo;
-	GError *error = NULL;
-
 	gedit_debug (DEBUG_COMMANDS);
-
-	logo = gdk_pixbuf_new_from_resource ("/org/gnome/gedit/pixmaps/gedit-logo.png", &error);
-	if (error != NULL)
-	{
-		g_warning ("Error when loading the gedit logo: %s", error->message);
-		g_clear_error (&error);
-	}
 
 	gtk_show_about_dialog (GTK_WINDOW (window),
 			       "program-name", "gedit",
 			       "authors", authors,
-			       "comments", _(comments),
-			       "copyright", copyright,
+			       "comments", _("gedit is a small and lightweight text editor for the GNOME desktop"),
+			       "copyright", "Copyright 1998-2020 – the gedit team",
 			       "license-type", GTK_LICENSE_GPL_2_0,
+			       "logo-icon-name", "org.gnome.gedit",
 			       "documenters", documenters,
-			       "logo", logo,
 			       "translator-credits", _("translator-credits"),
 			       "version", VERSION,
 			       "website", "http://www.gedit.org",
 			       "website-label", "www.gedit.org",
 			       NULL);
-
-	g_clear_object (&logo);
 }
 
 /* ex:set ts=8 noet: */

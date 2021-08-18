@@ -1,9 +1,9 @@
 /*
- * gedit-settings.h
  * This file is part of gedit
  *
+ * Copyright (C) 2002 - Paolo Maggi
  * Copyright (C) 2009 - Ignacio Casal Quinteiro
- *               2002 - Paolo Maggi
+ * Copyright (C) 2020 - Sébastien Wilmet <swilmet@gnome.org>
  *
  * gedit is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,9 +24,7 @@
 #ifndef GEDIT_SETTINGS_H
 #define GEDIT_SETTINGS_H
 
-#include <glib-object.h>
-#include <glib.h>
-#include "gedit-app.h"
+#include <gio/gio.h>
 
 G_BEGIN_DECLS
 
@@ -34,21 +32,20 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE (GeditSettings, gedit_settings, GEDIT, SETTINGS, GObject)
 
-GeditSettings		*gedit_settings_new				(void);
+G_GNUC_INTERNAL
+GeditSettings *	_gedit_settings_get_singleton				(void);
 
-GeditLockdownMask	 gedit_settings_get_lockdown			(GeditSettings *gs);
+void		gedit_settings_unref_singleton				(void);
 
-gchar			*gedit_settings_get_system_font			(GeditSettings *gs);
+G_GNUC_INTERNAL
+GSettings *	_gedit_settings_peek_editor_settings			(GeditSettings *self);
 
-GSList			*gedit_settings_get_candidate_encodings		(gboolean      *default_candidates);
+G_GNUC_INTERNAL
+GSettings *	_gedit_settings_peek_file_chooser_state_settings	(GeditSettings *self);
 
-/* Utility functions */
-GSList			*gedit_settings_get_list			(GSettings     *settings,
-									 const gchar   *key);
+gchar *		gedit_settings_get_system_font				(GeditSettings *self);
 
-void			 gedit_settings_set_list			(GSettings     *settings,
-									 const gchar   *key,
-									 const GSList  *list);
+GSList *	gedit_settings_get_candidate_encodings			(gboolean *default_candidates);
 
 /* key constants */
 #define GEDIT_SETTINGS_USE_DEFAULT_FONT			"use-default-font"
@@ -72,14 +69,10 @@ void			 gedit_settings_set_list			(GSettings     *settings,
 #define GEDIT_SETTINGS_RESTORE_CURSOR_POSITION		"restore-cursor-position"
 #define GEDIT_SETTINGS_SYNTAX_HIGHLIGHTING		"syntax-highlighting"
 #define GEDIT_SETTINGS_SEARCH_HIGHLIGHTING		"search-highlighting"
-#define GEDIT_SETTINGS_TOOLBAR_VISIBLE			"toolbar-visible"
-#define GEDIT_SETTINGS_TOOLBAR_BUTTONS_STYLE		"toolbar-buttons-style"
-#define GEDIT_SETTINGS_DISPLAY_OVERVIEW_MAP		"display-overview-map"
 #define GEDIT_SETTINGS_BACKGROUND_PATTERN		"background-pattern"
 #define GEDIT_SETTINGS_STATUSBAR_VISIBLE		"statusbar-visible"
 #define GEDIT_SETTINGS_SIDE_PANEL_VISIBLE		"side-panel-visible"
 #define GEDIT_SETTINGS_BOTTOM_PANEL_VISIBLE		"bottom-panel-visible"
-#define GEDIT_SETTINGS_MAX_RECENTS			"max-recents"
 #define GEDIT_SETTINGS_PRINT_SYNTAX_HIGHLIGHTING	"print-syntax-highlighting"
 #define GEDIT_SETTINGS_PRINT_HEADER			"print-header"
 #define GEDIT_SETTINGS_PRINT_WRAP_MODE			"print-wrap-mode"
@@ -103,7 +96,10 @@ void			 gedit_settings_set_list			(GSettings     *settings,
 #define GEDIT_SETTINGS_SIDE_PANEL_ACTIVE_PAGE		"side-panel-active-page"
 #define GEDIT_SETTINGS_BOTTOM_PANEL_SIZE		"bottom-panel-size"
 #define GEDIT_SETTINGS_BOTTOM_PANEL_ACTIVE_PAGE		"bottom-panel-active-page"
+
+/* file chooser state keys */
 #define GEDIT_SETTINGS_ACTIVE_FILE_FILTER		"filter-id"
+#define GEDIT_SETTINGS_FILE_CHOOSER_OPEN_RECENT		"open-recent"
 
 G_END_DECLS
 

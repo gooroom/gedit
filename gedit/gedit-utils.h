@@ -27,117 +27,40 @@
 
 G_BEGIN_DECLS
 
-/* useful macro */
-#define GBOOLEAN_TO_POINTER(i) (GINT_TO_POINTER ((i) ? 2 : 1))
-#define GPOINTER_TO_BOOLEAN(i) ((gboolean) ((GPOINTER_TO_INT(i) == 2) ? TRUE : FALSE))
+gboolean                   gedit_utils_menu_position_under_tree_view          (GtkTreeView     *tree_view,
+                                                                               GdkRectangle    *rect);
 
-/**
- * IS_VALID_BOOLEAN:
- * @v: a gboolean.
- *
- * Deprecated: 3.18
- */
-#ifndef GEDIT_DISABLE_DEPRECATED
-#define IS_VALID_BOOLEAN(v) (((v == TRUE) || (v == FALSE)) ? TRUE : FALSE)
-#endif
+void                       gedit_utils_set_atk_name_description               (GtkWidget       *widget,
+                                                                               const gchar     *name,
+                                                                               const gchar     *description);
 
-enum { GEDIT_ALL_WORKSPACES = 0xffffffff };
+gchar                     *gedit_utils_location_get_dirname_for_display       (GFile *location);
 
-void		 gedit_utils_menu_position_under_widget (GtkMenu          *menu,
-							 gint             *x,
-							 gint             *y,
-							 gboolean         *push_in,
-							 gpointer          user_data);
+gboolean                   gedit_utils_is_valid_location                      (GFile *location);
 
-void		 gedit_utils_menu_position_under_tree_view
-							(GtkMenu          *menu,
-							 gint             *x,
-							 gint             *y,
-							 gboolean         *push_in,
-							 gpointer          user_data);
-
-G_DEPRECATED
-gchar		*gedit_utils_escape_underscores		(const gchar      *text,
-							 gssize            length);
-
-gchar		*gedit_utils_str_middle_truncate	(const gchar      *string,
-							 guint             truncate_length);
-
-gchar		*gedit_utils_str_end_truncate		(const gchar      *string,
-							 guint             truncate_length);
-
-void		 gedit_utils_set_atk_name_description	(GtkWidget        *widget,
-							 const gchar      *name,
-							 const gchar      *description);
-
-void		 gedit_utils_set_atk_relation		(GtkWidget        *obj1,
-							 GtkWidget        *obj2,
-							 AtkRelationType   rel_type);
-
-void		 gedit_warning				(GtkWindow        *parent,
-							 const gchar      *format,
-							 ...) G_GNUC_PRINTF(2, 3);
-
-gchar		*gedit_utils_make_valid_utf8		(const char       *name);
-
-/* Note that this function replace home dir with ~ */
-G_DEPRECATED
-gchar		*gedit_utils_uri_get_dirname		(const char       *uri);
-
-gchar		*gedit_utils_location_get_dirname_for_display
-							(GFile            *location);
-
-gchar		*gedit_utils_replace_home_dir_with_tilde(const gchar      *uri);
-
-guint		 gedit_utils_get_current_workspace	(GdkScreen        *screen);
-
-guint		 gedit_utils_get_window_workspace	(GtkWindow        *gtkwindow);
-
-void		 gedit_utils_get_current_viewport	(GdkScreen        *screen,
-							 gint             *x,
-							 gint             *y);
-
-gboolean	 gedit_utils_is_valid_location		(GFile            *location);
-
-G_DEPRECATED
-gboolean	 gedit_utils_get_ui_objects		(const gchar      *filename,
-							 gchar           **root_objects,
-							 GtkWidget       **error_widget,
-							 const gchar      *object_name,
-							 ...) G_GNUC_NULL_TERMINATED;
-
-G_DEPRECATED
-gboolean         gedit_utils_get_ui_objects_with_translation_domain
-                                                        (const gchar  *filename,
-                                                         const gchar  *translation_domain,
-                                                         gchar       **root_objects,
-                                                         GtkWidget   **error_widget,
-                                                         const gchar  *object_name,
-                                                         ...) G_GNUC_NULL_TERMINATED;
-
-G_DEPRECATED
-gchar		*gedit_utils_make_canonical_uri_from_shell_arg
-							(const gchar      *str);
-
-gchar		*gedit_utils_basename_for_display	(GFile            *location);
-gboolean	 gedit_utils_decode_uri 		(const gchar      *uri,
-							 gchar           **scheme,
-							 gchar           **user,
-							 gchar           **port,
-							 gchar           **host,
-							 gchar           **path);
-
+gchar                     *gedit_utils_basename_for_display                   (GFile *location);
 
 /* Turns data from a drop into a list of well formatted uris */
-gchar		**gedit_utils_drop_get_uris		(GtkSelectionData *selection_data);
+gchar                    **gedit_utils_drop_get_uris                          (GtkSelectionData     *selection_data);
 
-GtkSourceCompressionType
-		 gedit_utils_get_compression_type_from_content_type
-		 					(const gchar      *content_type);
+gchar                     *gedit_utils_set_direct_save_filename               (GdkDragContext       *context);
 
-gchar           *gedit_utils_set_direct_save_filename	(GdkDragContext *context);
+GtkSourceCompressionType   gedit_utils_get_compression_type_from_content_type (const gchar          *content_type);
 
-const gchar     *gedit_utils_newline_type_to_string	(GtkSourceNewlineType newline_type);
+const gchar               *gedit_utils_newline_type_to_string                 (GtkSourceNewlineType  newline_type);
+
+G_DEPRECATED_FOR (tepl_utils_show_warning_dialog)
+void                       gedit_warning                                      (GtkWindow      *parent,
+                                                                               const gchar    *format,
+                                                                               ...) G_GNUC_PRINTF(2, 3);
+
+G_DEPRECATED_FOR (tepl_utils_decode_uri)
+gboolean                   gedit_utils_decode_uri                             (const gchar  *uri,
+                                                                               gchar       **scheme,
+                                                                               gchar       **user,
+                                                                               gchar       **host,
+                                                                               gchar       **port,
+                                                                               gchar       **path);
 
 G_END_DECLS
 

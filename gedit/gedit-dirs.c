@@ -18,9 +18,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "config.h"
 
 #include "gedit-dirs.h"
 
@@ -29,7 +27,7 @@
 #endif
 
 static gchar *user_config_dir        = NULL;
-static gchar *user_cache_dir         = NULL;
+static gchar *user_data_dir          = NULL;
 static gchar *user_styles_dir        = NULL;
 static gchar *user_plugins_dir       = NULL;
 static gchar *gedit_locale_dir       = NULL;
@@ -97,18 +95,16 @@ gedit_dirs_init ()
 							   NULL);
 	}
 
-	user_cache_dir = g_build_filename (g_get_user_cache_dir (),
-					   "gedit",
-					   NULL);
 	user_config_dir = g_build_filename (g_get_user_config_dir (),
 					    "gedit",
 					    NULL);
-	user_styles_dir = g_build_filename (g_get_user_data_dir (),
-					    "gedit",
+	user_data_dir = g_build_filename (g_get_user_data_dir (),
+					  "gedit",
+					  NULL);
+	user_styles_dir = g_build_filename (user_data_dir,
 					    "styles",
 					    NULL);
-	user_plugins_dir = g_build_filename (g_get_user_data_dir (),
-					     "gedit",
+	user_plugins_dir = g_build_filename (user_data_dir,
 					     "plugins",
 					     NULL);
 	gedit_plugins_dir = g_build_filename (gedit_lib_dir,
@@ -119,14 +115,14 @@ gedit_dirs_init ()
 void
 gedit_dirs_shutdown ()
 {
-	g_free (user_config_dir);
-	g_free (user_cache_dir);
-	g_free (user_styles_dir);
-	g_free (user_plugins_dir);
-	g_free (gedit_locale_dir);
-	g_free (gedit_lib_dir);
-	g_free (gedit_plugins_dir);
-	g_free (gedit_plugins_data_dir);
+	g_clear_pointer (&user_config_dir, g_free);
+	g_clear_pointer (&user_data_dir, g_free);
+	g_clear_pointer (&user_styles_dir, g_free);
+	g_clear_pointer (&user_plugins_dir, g_free);
+	g_clear_pointer (&gedit_locale_dir, g_free);
+	g_clear_pointer (&gedit_lib_dir, g_free);
+	g_clear_pointer (&gedit_plugins_dir, g_free);
+	g_clear_pointer (&gedit_plugins_data_dir, g_free);
 }
 
 const gchar *
@@ -136,9 +132,9 @@ gedit_dirs_get_user_config_dir (void)
 }
 
 const gchar *
-gedit_dirs_get_user_cache_dir (void)
+gedit_dirs_get_user_data_dir (void)
 {
-	return user_cache_dir;
+	return user_data_dir;
 }
 
 const gchar *

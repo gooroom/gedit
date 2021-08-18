@@ -1,3 +1,273 @@
+News in 3.38.1, 2020-11-20
+--------------------------
+* AppData: change donation URL to Liberapay.
+* Improvements to the user manual.
+* Translation updates.
+
+News in 3.38.0, 2020-09-11
+--------------------------
+* Translation updates.
+
+News in 3.37.92, 2020-09-04
+---------------------------
+* A few code refactorings.
+* CI: small update.
+* Translation updates.
+
+News in 3.37.3, 2020-07-03
+--------------------------
+* Start to migrate to GtkFileChooserNative.
+* User manual: remove the page with the list of keyboard shortcuts, it was
+  redundant with the new Shortcuts window.
+* Translation updates.
+
+News in 3.37.2, 2020-05-29
+--------------------------
+* gedit is now available on the Microsoft Store!
+* Remove the checkupdate plugin (no longer useful).
+* GSettings: revisit the set of plugins activated by default.
+* Change app description.
+* Write a script to have a list of plugins with their description.
+* Documentation updates.
+* About dialog: have the gedit icon, not the old logo.
+* Many improvements to the build system.
+* Fix a few bugs.
+* Add a few keyboard shortcuts to the Shortcuts window.
+* Updates to the Flatpak and Snap.
+* Translation updates.
+
+Tepl-ification:
+* Create GeditFactory class, subclass of TeplAbstractFactory.
+* Use tepl_application_handle_metadata().
+
+News in 3.37.1, 2020-04-24
+--------------------------
+* Remove the support for X11 workspaces.
+  See: commit d0728e7d0c3e7fdc58f03f0af4e0ce64eb7aef6e
+* gedit no longer depends on X11, gedit is now a native app on Wayland.
+* Remove the support for the org.gnome.desktop.lockdown GSettings.
+  See: commit b6728797d6b308b46cf4e0dae4493dc62d3decda
+* Some updates to the user manual.
+* Improvements to the keyboard shortcuts window.
+* Build system: various small improvements.
+* Update the Flatpak.
+* Other small improvements and code refactorings.
+* A few bug fixes.
+* Translation updates.
+
+Changes for plugins:
+* Bump API version to 3.38.
+* Remove all deprecated APIs.
+* See the list of API breaks and new deprecations in the API reference.
+
+Tepl-ification:
+* Move some utility functions to the Tepl library.
+* Refactor and move some I/O error infobars to Tepl.
+* GeditView now inherits from TeplView.
+* Port to the new Tepl metadata API.
+* Use TeplStyleSchemeChooserWidget.
+
+News in 3.36.1, 2020-03-20
+--------------------------
+* File chooser dialog: use text files filter by default.
+* Fix compilation on macOS.
+* Fix External Tools plugin.
+* Fix Snippets plugin.
+* Other bug fixes.
+* Translation updates.
+
+News in 3.36.0, 2020-03-06
+--------------------------
+* Fix a bug in the quickopen plugin.
+* Updates to the user manual.
+* Translation updates.
+
+News in 3.35.90, 2020-01-31
+---------------------------
+* Remove text centering when in fullscreen mode and when a right margin was
+  set. For the explanation see: commit 8710e89d847b0bfc65d7833255090e304cf7c890
+* Make the scrollbars always visible around the main text area. For the
+  explanation see: commit 5e0909c19f267b4023131881fac89c58a2a17453
+* Remove the overview map. For the explanation see:
+  commit 26899e0ba7c1390c098b61fc7a901d700c4e745c
+* File chooser dialog: re-add the feature to be able to customize the list of
+  character encodings.
+* Open a file from the headerbar: re-implement the previous user interface: two
+  buttons, "Open" to open the dialog window, and an arrow to open the recent
+  menu. For the explanation see: commit 27f54a9aed82109a512743b5e819b18004c19de7
+* GSettings schema: enable more features by default (auto-indent,
+  display-line-numbers, highlight-current-line and bracket-matching) and set
+  default style scheme to 'tango'.
+* Bug fixes.
+* Code refactorings.
+* Lots of small improvements to the build system.
+* The libsoup dependency is required only on Windows for the checkupdate plugin.
+* Translation updates.
+
+News in 3.35.1, 2019-11-22
+--------------------------
+
+User-visible changes:
+* File browser plugin: fix interactive search.
+* A few fixes in the CSS style.
+
+Changes for packagers:
+* New dependency: Tepl, which itself depends on Amtk and uchardet.
+  https://wiki.gnome.org/Projects/Tepl
+  https://wiki.gnome.org/Projects/Amtk
+  https://www.freedesktop.org/wiki/Software/uchardet/
+* Removed dependency: libxml-2.0
+* Remove the 'enable-gvfs-metadata' build option, it's now handled by Tepl, and
+  Tepl has a similar build option.
+* Rename the build option 'documentation' -> 'gtk_doc'.
+
+Changes for plugins:
+* Bump gedit API version to 3.36.
+* Remove the deprecated API.
+* Deprecate some gedit_utils functions.
+* Write an API breaks section in the gtk-doc reference manual of gedit.
+
+Tepl-ification:
+* Use some tepl_utils functions.
+* Use TeplFileMetadata internally in GeditDocument, which has permitted to
+  remove GeditMetadataManager.
+
+Other changes:
+* Create a nightly app icon (but not yet used).
+* Automatically test that the GSettings schema files are valid.
+* Various small code refactorings.
+* Updates to the Flatpak and Snap packages.
+  Convert the Flatpak manifest to YAML.
+* Translation updates.
+
+News in 3.34.0, 2019-09-09
+--------------------------
+* Translation updates.
+
+News in 3.33.92, 2019-09-03
+---------------------------
+* Documentation:
+ - Overhaul README.md and CONTRIBUTING.md (renamed from HACKING).
+ - Write several documents in Markdown in the docs/ directory:
+	- gedit development - getting started
+	- gedit installation by building the source code
+	- a new roadmap
+  (Sébastien Wilmet)
+* Updates to the Snap and Flatpak packages (Ken VanDine, Martin Blanchard)
+* Translation updates.
+
+=============
+gedit 3.33.90
+=============
+
+- Add "gedit" to .desktop keywords as search workaround for Flatpak
+  and Snap (Felipe)
+- Build fixes (Christopher, Jordi, Luca, Michael, Ting-Wei)
+- Translation updates
+
+Contributors:
+ Luca Bacci
+ Felipe Borges
+ Michael Catanzaro
+ Ting-Wei Lan
+ Jordi Mas
+ Christopher Reiter
+
+============
+gedit 3.32.2
+============
+
+- Reintroduce enable-gvfs-metadata build option (Andrea)
+- Fix several crash bugs (Andrea)
+- Translation updates
+
+Contributors: Andrea Azzarone
+
+============
+gedit 3.32.0
+============
+
+- Translation updates
+
+=============
+gedit 3.31.92
+=============
+Development release
+
+- Fix segfault in open document selector (Sebastien)
+- Update help for app menu changes (Andre)
+- Miscellaneous fixes (Jeremy, Ken)
+
+Contributors:
+ Sebastien Bacher, Jeremy Bicha, Andre Klapper, Ken VanDine
+
+==============
+gedit 3.31.90
+==============
+Development release
+
+- Switch to meson (Martin)
+- Drop autotools support (Jeremy)
+- Add tests to validate AppStream metadata and .desktop (Bilal)
+- Flatpak and Snap versions now bundle gedit-plugins (Martin & Jeremy)
+- Fix some issues resulting from the GNOME 3.32 menu changes (Jeffery)
+- Drop gconf conversion file (Jeremy)
+- Miscellaneous fixes (Andre, Jeremy)
+
+Contributors:
+ Jeremy Bicha, Martin Blanchard, Bilal Elmoussaoui
+ Andre Klapper, Jeffery To
+
+=============
+gedit 3.31.3
+=============
+Development release
+
+- Update README and rename to README.md (Alexandre)
+- Update new app icon (Jakub)
+- Fix searching with upper case characters in recent files popup (Sébastien)
+- Fix symbolic icons in file browser with dark themes (Sébastien)
+- Use a color for search matching in recent files popup that works better
+  with dark themes (Sébastien)
+- Clean up deprecations and more (Sébastien)
+
+Contributors:
+ Alexandre Franke, Sébastien Lafargue, Jakub Steiner
+
+=============
+gedit 3.31.2
+=============
+Development release
+
+- Follow GNOME 3.32 menu guidelines (Corey)
+- Allow closing tabs with middle-click (Corey)
+
+Contributors: Corey Daley
+
+=============
+gedit 3.31.1
+=============
+Development release
+
+- Fix tarball and version number from previous release
+
+=============
+gedit 3.31.0
+=============
+Development release
+
+- Redesign the app icon (Jakub)
+- Migrate to gettext and stop using intltool (Martin)
+- Switch from gtksourceview3 to gtksourceview4 (Christian)
+- Fix file chooser not opening in correct location after first time
+  (Sebastien)
+- Miscellaneous build and translation fixes (Jeremy, Mathieu, Piotr)
+- Translation updates
+
+Contributors:
+ Jeremy Bicha, Martin Blanchard, Mathieu Bridon, Piotr Drąg, Christian Hergert,
+ Sebastien Lafargue, Jakub Steiner
+
 =============
 gedit 3.30.2
 =============

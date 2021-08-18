@@ -1,5 +1,4 @@
 /*
- * gedit-history-entry.c
  * This file is part of gedit
  *
  * Copyright (C) 2006 - Paolo Borelli
@@ -18,41 +17,36 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
+#include "config.h"
 #include "gedit-history-entry.h"
-
 #include <string.h>
 #include <glib/gi18n.h>
-#include <gtk/gtk.h>
 
 #define MIN_ITEM_LEN 3
-
-#define GEDIT_HISTORY_ENTRY_HISTORY_LENGTH_DEFAULT 10
+#define HISTORY_LENGTH_DEFAULT 10
 
 struct _GeditHistoryEntry
 {
-	GtkComboBoxText     parent_instance;
+	GtkComboBoxText parent_instance;
 
-	gchar              *history_id;
-	guint               history_length;
+	gchar *history_id;
+	guint history_length;
 
 	GtkEntryCompletion *completion;
 
-	GSettings          *settings;
+	GSettings *settings;
 };
 
-enum {
+enum
+{
 	PROP_0,
 	PROP_HISTORY_ID,
 	PROP_HISTORY_LENGTH,
 	PROP_ENABLE_COMPLETION,
-	LAST_PROP
+	N_PROPERTIES
 };
 
-static GParamSpec *properties[LAST_PROP];
+static GParamSpec *properties[N_PROPERTIES];
 
 G_DEFINE_TYPE (GeditHistoryEntry, gedit_history_entry, GTK_TYPE_COMBO_BOX_TEXT)
 
@@ -62,25 +56,22 @@ gedit_history_entry_set_property (GObject      *object,
 				  const GValue *value,
 				  GParamSpec   *spec)
 {
-	GeditHistoryEntry *entry;
-
-	g_return_if_fail (GEDIT_IS_HISTORY_ENTRY (object));
-
-	entry = GEDIT_HISTORY_ENTRY (object);
+	GeditHistoryEntry *entry = GEDIT_HISTORY_ENTRY (object);
 
 	switch (prop_id)
 	{
 		case PROP_HISTORY_ID:
 			entry->history_id = g_value_dup_string (value);
 			break;
+
 		case PROP_HISTORY_LENGTH:
-			gedit_history_entry_set_history_length (entry,
-								g_value_get_uint (value));
+			gedit_history_entry_set_history_length (entry, g_value_get_uint (value));
 			break;
+
 		case PROP_ENABLE_COMPLETION:
-			gedit_history_entry_set_enable_completion (entry,
-			                                           g_value_get_boolean (value));
+			gedit_history_entry_set_enable_completion (entry, g_value_get_boolean (value));
 			break;
+
 		default:
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, spec);
 	}
@@ -92,23 +83,22 @@ gedit_history_entry_get_property (GObject    *object,
 				  GValue     *value,
 				  GParamSpec *spec)
 {
-	GeditHistoryEntry *entry;
-
-	g_return_if_fail (GEDIT_IS_HISTORY_ENTRY (object));
-
-	entry = GEDIT_HISTORY_ENTRY (object);
+	GeditHistoryEntry *entry = GEDIT_HISTORY_ENTRY (object);
 
 	switch (prop_id)
 	{
 		case PROP_HISTORY_ID:
 			g_value_set_string (value, entry->history_id);
 			break;
+
 		case PROP_HISTORY_LENGTH:
-			g_value_set_uint (value, entry->history_length);
+			g_value_set_uint (value, gedit_history_entry_get_history_length (entry));
 			break;
+
 		case PROP_ENABLE_COMPLETION:
-			g_value_set_boolean (value, gedit_history_entry_get_enable_completion (GEDIT_HISTORY_ENTRY (object)));
+			g_value_set_boolean (value, gedit_history_entry_get_enable_completion (entry));
 			break;
+
 		default:
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, spec);
 	}
@@ -171,28 +161,32 @@ gedit_history_entry_class_init (GeditHistoryEntryClass *klass)
 
 	properties[PROP_HISTORY_ID] =
 		g_param_spec_string ("history-id",
-		                     "History ID",
-		                     "History ID",
-		                     NULL,
-		                     G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+				     "history-id",
+				     "",
+				     NULL,
+				     G_PARAM_READWRITE |
+				     G_PARAM_CONSTRUCT_ONLY |
+				     G_PARAM_STATIC_STRINGS);
 
 	properties[PROP_HISTORY_LENGTH] =
 		g_param_spec_uint ("history-length",
-		                   "Max History Length",
-		                   "Max History Length",
-		                   0,
-		                   G_MAXUINT,
-		                   GEDIT_HISTORY_ENTRY_HISTORY_LENGTH_DEFAULT,
-		                   G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+				   "history-length",
+				   "",
+				   0,
+				   G_MAXUINT,
+				   HISTORY_LENGTH_DEFAULT,
+				   G_PARAM_READWRITE |
+				   G_PARAM_STATIC_STRINGS);
 
 	properties[PROP_ENABLE_COMPLETION] =
 		g_param_spec_boolean ("enable-completion",
-		                      "Enable Completion",
-		                      "Wether the completion is enabled",
-		                      TRUE,
-		                      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+				      "enable-completion",
+				      "",
+				      TRUE,
+				      G_PARAM_READWRITE |
+				      G_PARAM_STATIC_STRINGS);
 
-	g_object_class_install_properties (object_class, LAST_PROP, properties);
+	g_object_class_install_properties (object_class, N_PROPERTIES, properties);
 }
 
 static GtkListStore *
@@ -325,67 +319,28 @@ clamp_list_store (GtkListStore *store,
 	gtk_tree_path_free (path);
 }
 
-static void
-insert_history_item (GeditHistoryEntry *entry,
-		     const gchar       *text,
-		     gboolean           prepend)
+void
+gedit_history_entry_prepend_text (GeditHistoryEntry *entry,
+				  const gchar       *text)
 {
 	GtkListStore *store;
 
+	g_return_if_fail (GEDIT_IS_HISTORY_ENTRY (entry));
+	g_return_if_fail (text != NULL);
+
 	if (g_utf8_strlen (text, -1) <= MIN_ITEM_LEN)
+	{
 		return;
+	}
 
 	store = get_history_store (entry);
-
-	/* remove the text from the store if it was already
-	 * present. If it wasn't, clamp to max history - 1
-	 * before inserting the new row, otherwise appending
-	 * would not work */
 
 	if (!remove_item (entry, text))
 	{
 		clamp_list_store (store, entry->history_length - 1);
 	}
 
-	if (prepend)
-	{
-		gtk_combo_box_text_prepend_text (GTK_COMBO_BOX_TEXT (entry), text);
-	}
-	else
-	{
-		gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (entry), text);
-	}
-
-	gedit_history_entry_save_history (entry);
-}
-
-void
-gedit_history_entry_prepend_text (GeditHistoryEntry *entry,
-				  const gchar       *text)
-{
-	g_return_if_fail (GEDIT_IS_HISTORY_ENTRY (entry));
-	g_return_if_fail (text != NULL);
-
-	insert_history_item (entry, text, TRUE);
-}
-
-void
-gedit_history_entry_append_text (GeditHistoryEntry *entry,
-				 const gchar       *text)
-{
-	g_return_if_fail (GEDIT_IS_HISTORY_ENTRY (entry));
-	g_return_if_fail (text != NULL);
-
-	insert_history_item (entry, text, FALSE);
-}
-
-void
-gedit_history_entry_clear (GeditHistoryEntry *entry)
-{
-	g_return_if_fail (GEDIT_IS_HISTORY_ENTRY (entry));
-
-	gtk_combo_box_text_remove_all (GTK_COMBO_BOX_TEXT (entry));
-
+	gtk_combo_box_text_prepend_text (GTK_COMBO_BOX_TEXT (entry), text);
 	gedit_history_entry_save_history (entry);
 }
 
@@ -393,7 +348,7 @@ static void
 gedit_history_entry_init (GeditHistoryEntry *entry)
 {
 	entry->history_id = NULL;
-	entry->history_length = GEDIT_HISTORY_ENTRY_HISTORY_LENGTH_DEFAULT;
+	entry->history_length = HISTORY_LENGTH_DEFAULT;
 
 	entry->completion = NULL;
 
