@@ -1,0 +1,266 @@
+From 25c85f14aa337d15f2a108ad8684bd9ad07fd24f Mon Sep 17 00:00:00 2001
+From: donghun <donghun@gooroom.kr>
+Date: Wed, 28 Apr 2021 18:50:23 +0900
+Subject: [PATCH] Add plug-in settings gschema and disable default
+
+Change-Id: I75dbfdbcbee7e9db043f0571bbe6ab5c86dc8eea
+---
+ data/org.gnome.gedit.gschema.xml.in |  5 ++
+ gedit/gedit-preferences-dialog.c    |  8 ++-
+ gedit/gedit-settings.h              |  1 +
+ po/ko.po                            | 72 ++++++++++++++++-------------
+ 4 files changed, 53 insertions(+), 33 deletions(-)
+
+diff --git a/data/org.gnome.gedit.gschema.xml.in b/data/org.gnome.gedit.gschema.xml.in
+index b797d84..0260451 100644
+--- a/data/org.gnome.gedit.gschema.xml.in
++++ b/data/org.gnome.gedit.gschema.xml.in
+@@ -169,6 +169,11 @@
+       <summary>Notebook Show Tabs Mode</summary>
+       <description>Specifies when to show the notebook tabs. Use “never” to never show the tabs, “always” to always show the tabs, and “auto” to show the tabs only when there is more than one tab. Note that the values are case-sensitive, so make sure they appear exactly as mentioned here.</description>
+     </key>
++    <key name="plugins-visible" type="b">
++      <default>false</default>
++      <summary>Plugin is Visible</summary>
++      <description>Whether to display the plug-in in the preferences window.</description>
++    </key>
+     <key name="statusbar-visible" type="b">
+       <default>true</default>
+       <summary>Status Bar is Visible</summary>
+diff --git a/gedit/gedit-preferences-dialog.c b/gedit/gedit-preferences-dialog.c
+index ce6c0e2..8ca7ddc 100644
+--- a/gedit/gedit-preferences-dialog.c
++++ b/gedit/gedit-preferences-dialog.c
+@@ -826,7 +826,13 @@ setup_font_colors_page (GeditPreferencesDialog *dlg)
+ static void
+ setup_plugins_page (GeditPreferencesDialog *dlg)
+ {
+-	gtk_widget_show_all (dlg->plugin_manager);
++        gboolean status;
++        status = g_settings_get_boolean (dlg->uisettings, GEDIT_SETTINGS_PLUGINS_VISIBLE);
++
++        if (status)
++                gtk_widget_show_all (dlg->plugin_manager);
++        else
++                gtk_widget_hide (dlg->plugin_manager);
+ }
+ 
+ static void
+diff --git a/gedit/gedit-settings.h b/gedit/gedit-settings.h
+index 82a8853..c1b5dd2 100644
+--- a/gedit/gedit-settings.h
++++ b/gedit/gedit-settings.h
+@@ -87,6 +87,7 @@ GSList *	gedit_settings_get_candidate_encodings			(gboolean *default_candidates)
+ #define GEDIT_SETTINGS_CANDIDATE_ENCODINGS		"candidate-encodings"
+ #define GEDIT_SETTINGS_ACTIVE_PLUGINS			"active-plugins"
+ #define GEDIT_SETTINGS_ENSURE_TRAILING_NEWLINE		"ensure-trailing-newline"
++#define GEDIT_SETTINGS_PLUGINS_VISIBLE			"plugins-visible"
+ 
+ /* window state keys */
+ #define GEDIT_SETTINGS_WINDOW_STATE			"state"
+diff --git a/po/ko.po b/po/ko.po
+index 018cf95..4f07083 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -331,44 +331,52 @@ msgstr ""
+ "입력해야 합니다."
+ 
+ #: data/org.gnome.gedit.gschema.xml.in:174
++msgid "Plugin is Visible"
++msgstr "플러그인 설정 보임"
++
++#: data/org.gnome.gedit.gschema.xml.in:175
++msgid "Whether to display the plug-in in the preferences window."
++msgstr "기본 설정 창에 플러그인을 표시할지 여부입니다."
++
++#: data/org.gnome.gedit.gschema.xml.in:179
+ msgid "Status Bar is Visible"
+ msgstr "상태 표시줄 보임"
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:175
++#: data/org.gnome.gedit.gschema.xml.in:180
+ msgid ""
+ "Whether the status bar at the bottom of editing windows should be visible."
+ msgstr "편집 창 아래에 상태 표시줄을 보일지 여부."
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:179
++#: data/org.gnome.gedit.gschema.xml.in:184
+ msgid "Side panel is Visible"
+ msgstr "가장자리 패널 보임"
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:180
++#: data/org.gnome.gedit.gschema.xml.in:185
+ msgid ""
+ "Whether the side panel at the left of editing windows should be visible."
+ msgstr "편집 창 왼쪽에 가장자리 패널을 보일지 여부."
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:189
++#: data/org.gnome.gedit.gschema.xml.in:194
+ msgid "Print Syntax Highlighting"
+ msgstr "구문 강조 인쇄"
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:190
++#: data/org.gnome.gedit.gschema.xml.in:195
+ msgid "Whether gedit should print syntax highlighting when printing documents."
+ msgstr "문서를 인쇄할 때 구문 강조를 인쇄합니다."
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:194
++#: data/org.gnome.gedit.gschema.xml.in:199
+ msgid "Print Header"
+ msgstr "머릿말 인쇄"
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:195
++#: data/org.gnome.gedit.gschema.xml.in:200
+ msgid "Whether gedit should include a document header when printing documents."
+ msgstr "문서를 인쇄할 때 문서 머릿말을 넣습니다."
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:204
++#: data/org.gnome.gedit.gschema.xml.in:209
+ msgid "Printing Line Wrapping Mode"
+ msgstr "줄 바꿈 모드 인쇄"
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:205
++#: data/org.gnome.gedit.gschema.xml.in:210
+ msgid ""
+ "Specifies how to wrap long lines for printing. Use “none” for no wrapping, "
+ "“word” for wrapping at word boundaries, and “char” for wrapping at "
+@@ -380,11 +388,11 @@ msgstr ""
+ "면 “char”을 쓰십시오. 이 값은 대소문자를 구별하므로 여기 설명한 대로 정확히 "
+ "입력해야 합니다."
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:209
++#: data/org.gnome.gedit.gschema.xml.in:214
+ msgid "Print Line Numbers"
+ msgstr "줄 번호 인쇄"
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:210
++#: data/org.gnome.gedit.gschema.xml.in:215
+ msgid ""
+ "If this value is 0, then no line numbers will be inserted when printing a "
+ "document. Otherwise, gedit will print line numbers every such number of "
+@@ -394,29 +402,29 @@ msgstr ""
+ "줄 번호를 인쇄합니다."
+ 
+ #. Translators: This is a GSettings default value. Do NOT change or localize the quotation marks!
+-#: data/org.gnome.gedit.gschema.xml.in:214
++#: data/org.gnome.gedit.gschema.xml.in:219
+ msgid "'Monospace 9'"
+ msgstr "'Monospace 9'"
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:215
++#: data/org.gnome.gedit.gschema.xml.in:220
+ msgid "Body Font for Printing"
+ msgstr "인쇄용 본문 글꼴"
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:216
++#: data/org.gnome.gedit.gschema.xml.in:221
+ msgid ""
+ "Specifies the font to use for a document’s body when printing documents."
+ msgstr "문서를 인쇄할 때 문서의 본문에 쓸 글꼴을 지정합니다."
+ 
+ #. Translators: This is a GSettings default value. Do NOT change or localize the quotation marks!
+-#: data/org.gnome.gedit.gschema.xml.in:220
++#: data/org.gnome.gedit.gschema.xml.in:225
+ msgid "'Sans 11'"
+ msgstr "'Sans 11'"
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:221
++#: data/org.gnome.gedit.gschema.xml.in:226
+ msgid "Header Font for Printing"
+ msgstr "인쇄용 머릿말 글꼴"
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:222
++#: data/org.gnome.gedit.gschema.xml.in:227
+ msgid ""
+ "Specifies the font to use for page headers when printing a document. This "
+ "will only take effect if the “Print Header” option is turned on."
+@@ -425,15 +433,15 @@ msgstr ""
+ "어야만 적용됩니다."
+ 
+ #. Translators: This is a GSettings default value. Do NOT change or localize the quotation marks!
+-#: data/org.gnome.gedit.gschema.xml.in:226
++#: data/org.gnome.gedit.gschema.xml.in:231
+ msgid "'Sans 8'"
+ msgstr "'Sans 8'"
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:227
++#: data/org.gnome.gedit.gschema.xml.in:232
+ msgid "Line Number Font for Printing"
+ msgstr "인쇄용 줄 번호 글꼴"
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:228
++#: data/org.gnome.gedit.gschema.xml.in:233
+ msgid ""
+ "Specifies the font to use for line numbers when printing. This will only "
+ "take effect if the “Print Line Numbers” option is non-zero."
+@@ -441,43 +449,43 @@ msgstr ""
+ "인쇄할 때 줄 번호에 쓸 글꼴을 지정합니다. “줄 번호 인쇄” 옵션이 0이 아닌 값"
+ "일 때 적용됩니다."
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:232
++#: data/org.gnome.gedit.gschema.xml.in:237
+ msgid "Margin Left"
+ msgstr "왼쪽 여백"
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:233
++#: data/org.gnome.gedit.gschema.xml.in:238
+ msgid "The left margin, in millimeters."
+ msgstr "왼쪽 여백, 밀리미터 단위."
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:237
++#: data/org.gnome.gedit.gschema.xml.in:242
+ msgid "Margin Top"
+ msgstr "위 여백"
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:238
++#: data/org.gnome.gedit.gschema.xml.in:243
+ msgid "The top margin, in millimeters."
+ msgstr "위 여백, 밀리미터 단위."
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:242
++#: data/org.gnome.gedit.gschema.xml.in:247
+ msgid "Margin Right"
+ msgstr "오른쪽 여백"
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:243
++#: data/org.gnome.gedit.gschema.xml.in:248
+ msgid "The right margin, in millimeters."
+ msgstr "오른쪽 여백, 밀리미터 단위."
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:247
++#: data/org.gnome.gedit.gschema.xml.in:252
+ msgid "Margin Bottom"
+ msgstr "아래 여백"
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:248
++#: data/org.gnome.gedit.gschema.xml.in:253
+ msgid "The bottom margin, in millimeters."
+ msgstr "아래 여백, 밀리미터 단위."
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:254
++#: data/org.gnome.gedit.gschema.xml.in:259
+ msgid "Candidate Encodings"
+ msgstr "문자 인코딩"
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:255
++#: data/org.gnome.gedit.gschema.xml.in:260
+ msgid ""
+ "List of candidate encodings shown in the Character Encoding menu in the open/"
+ "save file chooser. “CURRENT” represents the current locale encoding. Only "
+@@ -489,11 +497,11 @@ msgstr ""
+ "용합니다. 기본값은 빈 목록으로, 이 경우 국가와 언어에 따라 적당한 기본값을 표"
+ "시합니다."
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:304
++#: data/org.gnome.gedit.gschema.xml.in:309
+ msgid "Active plugins"
+ msgstr "활성 플러그인"
+ 
+-#: data/org.gnome.gedit.gschema.xml.in:305
++#: data/org.gnome.gedit.gschema.xml.in:310
+ msgid "List of active plugins."
+ msgstr "활성 플러그인의 목록."
+ 
+-- 
+2.20.1
+ 
