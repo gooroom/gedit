@@ -1,0 +1,18 @@
+diff --git a/gedit/gedit-window.c b/gedit/gedit-window.c
+index a5ab1ce..cee9d89 100644
+--- a/gedit/gedit-window.c
++++ b/gedit/gedit-window.c
+@@ -1015,11 +1015,11 @@ set_title (GeditWindow *window)
+ 		                            window,
+ 		                            "gedit");
+ 		gtk_header_bar_set_title (GTK_HEADER_BAR (window->priv->headerbar),
+-		                          "gedit");
++		                          "");
+ 		gtk_header_bar_set_subtitle (GTK_HEADER_BAR (window->priv->headerbar),
+ 		                             NULL);
+ 		gtk_header_bar_set_title (GTK_HEADER_BAR (window->priv->fullscreen_headerbar),
+-		                          "gedit");
++		                          "");
+ 		gtk_header_bar_set_subtitle (GTK_HEADER_BAR (window->priv->fullscreen_headerbar),
+ 		                             NULL);
+ 		return;
