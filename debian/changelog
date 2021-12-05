@@ -1,3 +1,14 @@
+gedit (3.38.1-1+grm3u1) unstable; urgency=medium
+
+  [ heejun.jang ]
+  * [f73dfeba] [Bug:3140]Fixed english only title to none
+  * [afd117e6] Add plug-in setting gschema and disable default
+
+  [ subin.kim ]
+  * [1d0f7071] Fixed static code analysis issue
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Sun, 05 Dec 2021 13:24:21 +0900
+
 gedit (3.38.1-1) unstable; urgency=medium
 
   * New upstream release
