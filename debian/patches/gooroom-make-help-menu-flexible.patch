@@ -1,0 +1,32 @@
+diff --git a/gedit/gedit-app.c b/gedit/gedit-app.c
+index 5532d59..75d4e61 100644
+--- a/gedit/gedit-app.c
++++ b/gedit/gedit-app.c
+@@ -1580,6 +1580,12 @@ _gedit_app_get_hamburger_menu (GeditApp *app)
+ 
+ 	priv = gedit_app_get_instance_private (app);
+ 
++	if (g_file_test ("/usr/bin/yelp", G_FILE_TEST_EXISTS)) {
++		GMenuItem *item;
++		item = g_menu_item_new (_("_Help"), "app.help");
++		g_menu_append_item (priv->hamburger_menu, item);
++	}
++
+ 	return priv->hamburger_menu;
+ }
+ 
+diff --git a/gedit/resources/gtk/menus.ui b/gedit/resources/gtk/menus.ui
+index 10b9e94..c454376 100644
+--- a/gedit/resources/gtk/menus.ui
++++ b/gedit/resources/gtk/menus.ui
+@@ -119,10 +119,6 @@
+         <attribute name="label" translatable="yes">_Keyboard Shortcuts</attribute>
+         <attribute name="action">app.shortcuts</attribute>
+       </item>
+-      <item>
+-        <attribute name="label" translatable="yes">_Help</attribute>
+-        <attribute name="action">app.help</attribute>
+-      </item>
+       <item>
+         <attribute name="label" translatable="yes">_About Text Editor</attribute>
+         <attribute name="action">app.about</attribute>
