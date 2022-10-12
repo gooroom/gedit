@@ -1,0 +1,17 @@
+diff --git a/gedit/gedit-app.c b/gedit/gedit-app.c
+index 75d4e61..880e374 100644
+--- a/gedit/gedit-app.c
++++ b/gedit/gedit-app.c
+@@ -1577,9 +1577,11 @@ _gedit_app_get_hamburger_menu (GeditApp *app)
+ 	GeditAppPrivate *priv;
+ 
+ 	g_return_val_if_fail (GEDIT_IS_APP (app), NULL);
+-
+ 	priv = gedit_app_get_instance_private (app);
+ 
++	if (g_menu_model_get_n_items (priv->hamburger_menu) > 10)
++        return priv->hamburger_menu;
++
+ 	if (g_file_test ("/usr/bin/yelp", G_FILE_TEST_EXISTS)) {
+ 		GMenuItem *item;
+ 		item = g_menu_item_new (_("_Help"), "app.help");
