@@ -1,0 +1,140 @@
+diff --git a/gedit/gedit-print-job.c b/gedit/gedit-print-job.c
+index 6b07525..f94a203 100644
+--- a/gedit/gedit-print-job.c
++++ b/gedit/gedit-print-job.c
+@@ -61,6 +61,7 @@ struct _GeditPrintJob
+ 	GtkFontButton *numbers_fontbutton;
+ 
+ 	guint is_preview : 1;
++        gboolean page_over;
+ };
+ 
+ enum
+@@ -225,6 +226,7 @@ gedit_print_job_init (GeditPrintJob *job)
+ 	job->gsettings = g_settings_new ("org.gnome.gedit.preferences.print");
+ 
+ 	job->status_string = g_strdup (_("Preparing…"));
++        job->page_over = FALSE;
+ }
+ 
+ static void
+@@ -583,9 +585,22 @@ paginate_cb (GtkPrintOperation *operation,
+ 
+ 	if (finished)
+ 	{
+-		gint n_pages;
++                GtkPrintSettings *settings = NULL;
++                GtkPageRange     *ranges = NULL;
++		gint              n_pages, i, num_ranges;
+ 
+ 		n_pages = gtk_source_print_compositor_get_n_pages (job->compositor);
++                settings = gedit_print_job_get_print_settings (job);
++                ranges = gtk_print_settings_get_page_ranges (settings, &num_ranges);
++                if (ranges) {
++                  for (i = 0; i < num_ranges; i++)
++                    if (ranges[i].start >= n_pages) {
++                      job->page_over = TRUE;
++                      break;
++                    }
++                  g_free (ranges);
++                }
++
+ 		gtk_print_operation_set_n_pages (job->operation, n_pages);
+ 	}
+ 
+@@ -820,4 +835,12 @@ gedit_print_job_get_page_setup (GeditPrintJob *job)
+ 	return gtk_print_operation_get_default_page_setup (job->operation);
+ }
+ 
++gboolean
++gedit_print_job_get_page_over (GeditPrintJob *job)
++{
++	g_return_val_if_fail (GEDIT_IS_PRINT_JOB (job), NULL);
++
++	return job->page_over;
++}
++
+ /* ex:set ts=8 noet: */
+diff --git a/gedit/gedit-print-job.h b/gedit/gedit-print-job.h
+index f95563c..fa69758 100644
+--- a/gedit/gedit-print-job.h
++++ b/gedit/gedit-print-job.h
+@@ -63,6 +63,8 @@ GtkPrintSettings	*gedit_print_job_get_print_settings	(GeditPrintJob            *
+ 
+ GtkPageSetup		*gedit_print_job_get_page_setup		(GeditPrintJob            *job);
+ 
++gboolean		 gedit_print_job_get_page_over		(GeditPrintJob            *job);
++
+ G_END_DECLS
+ 
+ #endif /* GEDIT_PRINT_JOB_H */
+diff --git a/gedit/gedit-tab.c b/gedit/gedit-tab.c
+index 75f0097..37c2c7d 100644
+--- a/gedit/gedit-tab.c
++++ b/gedit/gedit-tab.c
+@@ -2224,6 +2224,29 @@ _gedit_tab_revert (GeditTab *tab)
+ 		      NULL);
+ }
+ 
++static void
++show_error_dialog (GeditTab        *tab,
++                   const gchar     *message,
++                   GError          *error)
++{
++        GtkWidget *dialog;
++
++        dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (tab))),
++                                         GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR,
++                                         GTK_MESSAGE_ERROR,
++                                         GTK_BUTTONS_CLOSE,
++                                         "%s", message);
++
++        if (error == NULL) {
++                gtk_window_set_title (GTK_WINDOW (dialog), _("Error"));
++                gtk_message_dialog_format_secondary_text (GTK_MESSAGE_DIALOG (dialog),
++                                                          "%s", _("Can not set print range over the maximum page."));
++        }
++
++        g_signal_connect (dialog, "response", G_CALLBACK (gtk_widget_destroy), NULL);
++        gtk_window_present (GTK_WINDOW (dialog));
++}
++
+ static void
+ close_printing (GeditTab *tab)
+ {
+@@ -2771,6 +2794,12 @@ done_printing_cb (GeditPrintJob       *job,
+ 		store_print_settings (tab, job);
+ 	}
+ 
++        if (gedit_print_job_get_page_over(job)) {
++          show_error_dialog (tab,
++                             _("Failed to print"),
++                             NULL);
++        }
++
+ 	/* TODO Show the error in an info bar. */
+ 	if (error != NULL)
+ 	{
+diff --git a/po/ko.po b/po/ko.po
+index 4f07083..2e67a4f 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -1336,6 +1336,18 @@ msgstr "MIME 종류:"
+ msgid "Encoding:"
+ msgstr "인코딩:"
+ 
++#: gedit/gedit-tab.c:2241
++msgid "Error"
++msgstr "에러"
++
++#: gedit/gedit-tab.c:2243
++msgid "Can not set print range over the maximum page."
++msgstr "인쇄 범위가 잘못되었습니다."
++
++#: gedit/gedit-tab.c:2799
++msgid "Failed to print"
++msgstr "인쇄 실패"
++
+ #. Translators: '/ on <remote-share>'
+ #: gedit/gedit-utils.c:436
+ #, c-format

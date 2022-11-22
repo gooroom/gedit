@@ -4,3 +4,4 @@ gooroom-add-plug-in-settings-gschema-and-disable-default.patch
 gooroom-fixed-static-code-analysis-issue.patch
 gooroom-make-help-menu-flexible.patch
 gooroom-only-one-help-menu.patch
+gooroom-add-print-error-dialog-when-set-page-range-over-the-maximum-page.patch
