@@ -1,0 +1,33 @@
+<page xmlns="http://projectmallard.org/1.0/"
+      xmlns:its="http://www.w3.org/2005/11/its"
+      type="guide"
+      id="index">
+  
+  <title>
+    <media type="image" mime="image/png" src="figures/gedit-icon.png" its:translate="no" />
+    gedit
+  </title>
+
+  <links type="topic" groups="intro-first intro-second" />
+
+  <section id="gedit-working-with-files">
+    <title>Working with files</title>
+    <links type="topic" groups="first second third fourth fifth sixth" style="2column" />
+  </section>
+
+  <section id="gedit-printing-guide">
+    <title>Printing with gedit</title>
+  </section>
+
+  <section id="gedit-advanced" style="2column">
+    <title>More advanced topics</title>
+  </section>
+
+  <section id="configure-gedit" style="2column">
+    <title>Configure gedit</title>
+  </section> 
+
+  <section id="gedit-plugins" style="2column">
+    <title>gedit plugins</title>
+  </section>
+</page>

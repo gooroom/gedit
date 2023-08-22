@@ -1,0 +1,22 @@
+<page xmlns="http://projectmallard.org/1.0/"
+      xmlns:its="http://www.w3.org/2005/11/its"
+      type="topic" style="task"
+      id="gedit-undo-redo">
+
+  <info>
+    <link type="guide" xref="index#gedit-working-with-files" group="fifth" />
+    <desc>Revert a recent change to one of your files.</desc>
+  </info>
+
+  <title>Undo/redo a recent action</title>
+
+  <p>If you make a mistake while editing a document in <app>gedit</app>, you can
+  undo the change by pressing <keyseq><key>Ctrl</key><key>Z</key></keyseq>.</p>
+
+  <note style="important">
+    <p>You cannot undo a change after you have closed a <app>gedit</app> file.</p>
+  </note>
+
+  <p>To redo the change that was undone, press
+  <keyseq><key>Ctrl</key><key>Shift</key><key>Z</key></keyseq>.</p>
+</page>

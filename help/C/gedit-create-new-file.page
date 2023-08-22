@@ -1,0 +1,22 @@
+<page xmlns="http://projectmallard.org/1.0/"
+      xmlns:its="http://www.w3.org/2005/11/its"
+      type="topic"
+      id="gedit-create-new-file">
+
+  <info>
+    <link type="guide" xref="gedit-files-basic" group="first" />
+    <desc>Open a new file for editing.</desc>
+  </info>
+
+  <title>Create a new file</title>
+
+  <p>
+    The easiest way to create a new file in <app>gedit</app> is to click the
+    <gui>+</gui> button (the <gui>Create a new document</gui> button) on the
+    left side of the header bar.
+  </p>
+  <p>
+    The new file will appear as a new tab inside the same <app>gedit</app>
+    window.
+  </p>
+</page>

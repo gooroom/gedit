@@ -1,0 +1,53 @@
+<page xmlns="http://projectmallard.org/1.0/"
+      xmlns:its="http://www.w3.org/2005/11/its"
+      type="topic"
+      id="gedit-tab-groups">
+
+  <info>
+    <link type="guide" xref="index#gedit-working-with-files" group="fourth"/>
+    <link type="seealso" xref="gedit-tabs"/>
+    <desc>View several documents side-by-side.</desc>
+  </info>
+
+  <title>Tab groups</title>
+
+  <p>
+    You can view several documents side-by-side inside the same <app>gedit</app>
+    window by creating a new <em>tab group</em>.
+  </p>
+
+  <section>
+    <title>Managing tab groups</title>
+    <p>
+      There are several possibilities for managing tab groups.
+    </p>
+    <p>
+      To create a new tab group, you can right-click on a tab title and select
+      <gui>Move to New Tab Group</gui>.
+    </p>
+    <p>
+      Keyboard shortcuts are available too.
+    </p>
+    <p>
+      The tab groups will be placed into two panes that can be resized. It is an
+      horizontal split: the original tab group is on the left, the new tab group
+      is added on the right.
+    </p>
+    <p>
+      You can open as much tab groups in a <app>gedit</app> window as your
+      screen allows, but you will have to resize them in order to see them
+      correctly.
+    </p>
+  </section>
+
+  <section>
+    <title>Move a tab to another tab group</title>
+    <p>
+      You can drag and drop a tab into another tab group.
+    </p>
+    <p>
+      See <link xref="gedit-tabs#drag-and-drop-tabs">Drag and drop tabs</link>
+      for more details.
+    </p>
+  </section>
+</page>

@@ -1,0 +1,21 @@
+<page xmlns="http://projectmallard.org/1.0/"
+      type="topic"
+      id="gedit-close-file">
+
+  <info>
+    <link type="guide" xref="gedit-files-basic" group="fourth" />
+    <desc>Exit from the file you are using.</desc>
+  </info>
+
+  <title>Close a file</title>
+
+  <p>
+    To close a file in <app>gedit</app>, click the <gui style="button">×</gui>
+    button that appears on the tab title. Note that when only a single file is
+    open in a window, you can close the window instead.
+  </p>
+  <p>
+    If your file contains changes that have not been saved, <app>gedit</app>
+    will prompt you to save those changes before closing the file.
+  </p>
+</page>
