@@ -1,0 +1,13 @@
+diff --git a/plugins/quickhighlight/gedit-quick-highlight-plugin.c b/plugins/quickhighlight/gedit-quick-highlight-plugin.c
+index 7b4289d..9930935 100644
+--- a/plugins/quickhighlight/gedit-quick-highlight-plugin.c
++++ b/plugins/quickhighlight/gedit-quick-highlight-plugin.c
+@@ -284,7 +284,7 @@ gedit_quick_highlight_plugin_mark_set_cb (GtkTextBuffer *textbuffer,
+ 
+ 	g_assert (GEDIT_QUICK_HIGHLIGHT_PLUGIN (plugin));
+ 
+-	if G_LIKELY (mark != plugin->priv->insert_mark)
++	if (G_LIKELY (mark != plugin->priv->insert_mark))
+ 	{
+ 		return;
+ 	}

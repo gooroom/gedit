@@ -1,3 +1,4 @@
 08_multiarch_fallback.patch
 gooroom-clear-headerbar-title.patch
 gooroom-add-plug-in-settings-gschema-and-disable-default.patch
+gooroom-fixed-static-code-analysis-issue.patch
