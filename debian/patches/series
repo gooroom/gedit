@@ -3,3 +3,4 @@ gooroom-clear-headerbar-title.patch
 gooroom-add-plug-in-settings-gschema-and-disable-default.patch
 gooroom-fixed-static-code-analysis-issue.patch
 gooroom-make-help-menu-flexible.patch
+gooroom-only-one-help-menu.patch
