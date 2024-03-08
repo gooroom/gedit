@@ -1,3 +1,16 @@
+gedit (44.2-1+grm4u1) unstable; urgency=medium
+
+  [ boyeon.choi ]
+  * [7a546e8b] [Bug:3140]Fixed english only title to none
+  * [95418259] Add plug-in setting gschema and disable default
+  * [77529fa4] Fixed static code analysis issue
+  * [ab134d01] [Bug:3901] Made help menu flexible
+  * [c8132a7b] Fixed the duplicate issue of the help menu when opening a new window
+  * [c0eb39c2] Add print error dialog when set page range over the maximum page
+  * [9d970dc1] [Bug:5466]Update ko.po for About gedit
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Fri, 08 Mar 2024 19:10:39 +0900
+
 gedit (44.2-1) unstable; urgency=medium
 
   * New upstream release
