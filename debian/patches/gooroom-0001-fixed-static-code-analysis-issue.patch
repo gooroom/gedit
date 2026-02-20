@@ -1,0 +1,16 @@
+Description: Fixed static code analysis issue
+ Add missing parentheses around if condition
+Author: Gooroom <gooroom@gooroom.kr>
+Bug-Gooroom: https://wiki.gooroom.kr/
+
+--- a/plugins/quickhighlight/gedit-quick-highlight-plugin.c
++++ b/plugins/quickhighlight/gedit-quick-highlight-plugin.c
+@@ -284,7 +284,7 @@ gedit_quick_highlight_plugin_mark_set_cb (GtkTextBuffer *textbuffe
+
+ 	g_assert (GEDIT_QUICK_HIGHLIGHT_PLUGIN (plugin));
+
+-	if G_LIKELY (mark != plugin->priv->insert_mark)
++	if (G_LIKELY (mark != plugin->priv->insert_mark))
+ 	{
+ 		return;
+ 	}

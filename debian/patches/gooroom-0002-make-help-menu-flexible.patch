@@ -1,0 +1,18 @@
+Description: Remove static help menu from menus.ui
+ Help menu will be added conditionally based on yelp availability
+Author: Gooroom <gooroom@gooroom.kr>
+Bug-Gooroom: 3901
+
+--- a/gedit/resources/gtk/menus.ui
++++ b/gedit/resources/gtk/menus.ui
+@@ -119,10 +119,6 @@
+         <attribute name="label" translatable="yes">_Keyboard Shortcuts</attribute>
+         <attribute name="action">win.show-help-overlay</attribute>
+       </item>
+-      <item>
+-        <attribute name="label" translatable="yes">_Help</attribute>
+-        <attribute name="action">app.help</attribute>
+-      </item>
+       <item>
+         <attribute name="label" translatable="yes">_About gedit</attribute>
+         <attribute name="action">app.about</attribute>

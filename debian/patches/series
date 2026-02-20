@@ -1,1 +1,6 @@
 08_multiarch_fallback.patch
+gooroom-0001-fixed-static-code-analysis-issue.patch
+gooroom-0002-make-help-menu-flexible.patch
+gooroom-0003-add-print-error-dialog.patch
+gooroom-0004-only-one-help-menu.patch
+gooroom-0005-clear-headerbar-title.patch

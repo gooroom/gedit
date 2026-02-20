@@ -1,3 +1,17 @@
+gedit (48.1-4+grm5u1) gooroom-5.0-unstable; urgency=medium
+
+  [ Gooroom ]
+  * Rebased on Debian stable 48.1-4 for Gooroom 5.0
+
+  [ Gooroom Patches ]
+  * gooroom-0001-fixed-static-code-analysis-issue.patch
+  * gooroom-0002-make-help-menu-flexible.patch
+  * gooroom-0003-add-print-error-dialog.patch
+  * gooroom-0004-only-one-help-menu.patch
+  * gooroom-0005-clear-headerbar-title.patch
+
+ -- Gooroom <gooroom@gooroom.kr>  Fri, 20 Feb 2026 15:23:24 +0900
+
 gedit (48.1-4) unstable; urgency=medium
 
   * Team upload

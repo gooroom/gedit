@@ -1,0 +1,6 @@
+# Gooroom local package - not intended for Debian upload
+gedit source: no-nmu-in-changelog
+gedit source: source-nmu-has-incorrect-version-number
+gedit source: latest-debian-changelog-entry-without-new-date
+# Ubuntu-specific field for tracking original maintainer
+gedit source: unknown-field Original-Maintainer

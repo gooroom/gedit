@@ -1,8 +1,8 @@
 Source: gedit
 Section: gnome
 Priority: optional
-Maintainer: Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.org>
-Uploaders: Amin Bandali <bandali@ubuntu.com>, Jeremy Bícha <jbicha@ubuntu.com>, Iain Lane <laney@debian.org>, Laurent Bigonville <bigon@debian.org>, Michael Biebl <biebl@debian.org>
+Maintainer: Gooroom <gooroom@gooroom.kr>
+XSBC-Original-Maintainer: Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.org>
 Build-Depends: appstream <!nocheck>,
                debhelper-compat (= 13),
                desktop-file-utils <!nocheck>,
@@ -28,8 +28,8 @@ Build-Depends: appstream <!nocheck>,
                meson (>= 0.59),
 Standards-Version: 4.7.0
 Rules-Requires-Root: no
-Vcs-Browser: https://salsa.debian.org/gnome-team/gedit
-Vcs-Git: https://salsa.debian.org/gnome-team/gedit.git
+Vcs-Browser: https://github.com/gooroom/gedit
+Vcs-Git: https://github.com/gooroom/gedit.git
 Homepage: https://gedit-text-editor.org/
 
 Package: gedit

@@ -1,0 +1,20 @@
+Description: Clear headerbar title when no document is open
+ Remove "gedit" branding from the headerbar for cleaner appearance
+Author: Gooroom <gooroom@gooroom.kr>
+Bug-Gooroom: 3140
+
+Index: gedit.git/gedit/gedit-window-titles.c
+===================================================================
+--- gedit.git.orig/gedit/gedit-window-titles.c
++++ gedit.git/gedit/gedit-window-titles.c
+@@ -103,8 +103,8 @@ update_titles (GeditWindowTitles *titles
+ 
+ 	if (doc == NULL)
+ 	{
+-		set_single_title (titles, g_get_application_name ());
+-		set_title (titles, g_get_application_name ());
++		set_single_title (titles, "");
++		set_title (titles, "");
+ 		set_subtitle (titles, NULL);
+ 		return;
+ 	}

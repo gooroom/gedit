@@ -1,0 +1,31 @@
+Description: Prevent duplicate help menu items
+ Check if help menu item was already added before adding again
+Author: Gooroom <gooroom@gooroom.kr>
+Bug-Gooroom: 4375
+
+Index: gedit.git/gedit/gedit-app.c
+===================================================================
+--- gedit.git.orig/gedit/gedit-app.c
++++ gedit.git/gedit/gedit-app.c
+@@ -1610,12 +1610,21 @@ _gedit_app_set_default_print_settings (G
+ GMenuModel *
+ _gedit_app_get_hamburger_menu (GeditApp *app)
+ {
++	static gboolean help_added = FALSE;
+ 	GeditAppPrivate *priv;
+ 
+ 	g_return_val_if_fail (GEDIT_IS_APP (app), NULL);
+ 
+ 	priv = gedit_app_get_instance_private (app);
+ 
++	if (!help_added && g_file_test ("/usr/bin/yelp", G_FILE_TEST_EXISTS)) {
++		GMenuItem *item;
++		item = g_menu_item_new (_("_Help"), "app.help");
++		g_menu_append_item (G_MENU (priv->hamburger_menu), item);
++		g_object_unref (item);
++		help_added = TRUE;
++	}
++
+ 	return priv->hamburger_menu;
+ }
+ 
