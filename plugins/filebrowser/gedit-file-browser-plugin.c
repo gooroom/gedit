@@ -68,6 +68,8 @@ struct _GeditFileBrowserPluginPrivate
 	gulong                  end_loading_handle;
 
 	guint			click_policy_handle;
+
+	TeplPanelItem          *side_panel_item;
 };
 
 enum
@@ -453,7 +455,7 @@ gedit_file_browser_plugin_activate (GeditWindowActivatable *activatable)
 {
 	GeditFileBrowserPlugin *plugin = GEDIT_FILE_BROWSER_PLUGIN (activatable);
 	GeditFileBrowserPluginPrivate *priv;
-	GtkWidget *panel;
+	TeplPanel *side_panel;
 	GeditFileBrowserStore *store;
 
 	priv = plugin->priv;
@@ -493,14 +495,15 @@ gedit_file_browser_plugin_activate (GeditWindowActivatable *activatable)
 	                 FILEBROWSER_FILTER_PATTERN,
 	                 G_SETTINGS_BIND_GET | G_SETTINGS_BIND_SET);
 
-	panel = gedit_window_get_side_panel (priv->window);
+	g_clear_object (&priv->side_panel_item);
+	priv->side_panel_item = tepl_panel_item_new (GTK_WIDGET (priv->tree_widget),
+						     "GeditFileBrowserPanel",
+						     _("File Browser"),
+						     NULL,
+						     0);
 
-	gtk_stack_add_titled (GTK_STACK (panel),
-	                      GTK_WIDGET (priv->tree_widget),
-	                      "GeditFileBrowserPanel",
-	                      _("File Browser"));
-
-	gtk_widget_show (GTK_WIDGET (priv->tree_widget));
+	side_panel = gedit_window_get_side_panel (priv->window);
+	tepl_panel_add (side_panel, priv->side_panel_item);
 
 	/* Install nautilus preferences */
 	install_nautilus_prefs (plugin);
@@ -551,8 +554,7 @@ gedit_file_browser_plugin_deactivate (GeditWindowActivatable *activatable)
 {
 	GeditFileBrowserPlugin *plugin = GEDIT_FILE_BROWSER_PLUGIN (activatable);
 	GeditFileBrowserPluginPrivate *priv = plugin->priv;
-	GtkWidget *panel;
-
+	TeplPanel *side_panel;
 
 	/* Unregister messages from the bus */
 	gedit_file_browser_messages_unregister (priv->window);
@@ -568,8 +570,9 @@ gedit_file_browser_plugin_deactivate (GeditWindowActivatable *activatable)
 					     priv->click_policy_handle);
 	}
 
-	panel = gedit_window_get_side_panel (priv->window);
-	gtk_container_remove (GTK_CONTAINER (panel), GTK_WIDGET (priv->tree_widget));
+	side_panel = gedit_window_get_side_panel (priv->window);
+	tepl_panel_remove (side_panel, priv->side_panel_item);
+	g_clear_object (&priv->side_panel_item);
 }
 
 static void

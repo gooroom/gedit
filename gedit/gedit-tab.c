@@ -40,6 +40,15 @@
 #include "gedit-settings.h"
 #include "gedit-view-frame.h"
 
+/**
+ * SECTION:gedit-tab
+ * @Title: GeditTab
+ * @Short_description: A document tab
+ *
+ * #GeditTab is a #GtkContainer that contains a #GeditView and can show other
+ * widgets such as a #TeplInfoBar.
+ */
+
 #define GEDIT_TAB_KEY "GEDIT_TAB_KEY"
 
 struct _GeditTab
@@ -113,8 +122,6 @@ struct _LoaderData
 	guint user_requested_encoding : 1;
 };
 
-G_DEFINE_TYPE (GeditTab, gedit_tab, GTK_TYPE_BOX)
-
 enum
 {
 	PROP_0,
@@ -123,19 +130,14 @@ enum
 	PROP_AUTO_SAVE,
 	PROP_AUTO_SAVE_INTERVAL,
 	PROP_CAN_CLOSE,
-	LAST_PROP
+	N_PROPERTIES
 };
 
-static GParamSpec *properties[LAST_PROP];
+static GParamSpec *properties[N_PROPERTIES];
 
-enum
-{
-	DROP_URIS,
-	LAST_SIGNAL
-};
+G_DEFINE_TYPE (GeditTab, gedit_tab, GTK_TYPE_BOX)
 
-static guint signals[LAST_SIGNAL];
-
+/* Prototypes */
 static gboolean gedit_tab_auto_save (GeditTab *tab);
 
 static void launch_loader (GTask                   *loading_task,
@@ -146,7 +148,7 @@ static void launch_saver (GTask *saving_task);
 static SaverData *
 saver_data_new (void)
 {
-	return g_slice_new0 (SaverData);
+	return g_new0 (SaverData, 1);
 }
 
 static void
@@ -164,14 +166,14 @@ saver_data_free (SaverData *data)
 			g_timer_destroy (data->timer);
 		}
 
-		g_slice_free (SaverData, data);
+		g_free (data);
 	}
 }
 
 static LoaderData *
 loader_data_new (void)
 {
-	return g_slice_new0 (LoaderData);
+	return g_new0 (LoaderData, 1);
 }
 
 static void
@@ -189,7 +191,7 @@ loader_data_free (LoaderData *data)
 			g_timer_destroy (data->timer);
 		}
 
-		g_slice_free (LoaderData, data);
+		g_free (data);
 	}
 }
 
@@ -370,13 +372,6 @@ gedit_tab_grab_focus (GtkWidget *widget)
 }
 
 static void
-gedit_tab_drop_uris (GeditTab  *tab,
-                     gchar    **uri_list)
-{
-	gedit_debug (DEBUG_TAB);
-}
-
-static void
 gedit_tab_class_init (GeditTabClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -388,64 +383,82 @@ gedit_tab_class_init (GeditTabClass *klass)
 
 	gtkwidget_class->grab_focus = gedit_tab_grab_focus;
 
+	/**
+	 * GeditTab:name:
+	 *
+	 * The tab's name.
+	 *
+	 * Deprecated: 47: Use the #TeplBuffer:tepl-short-title property
+	 *   instead.
+	 */
 	properties[PROP_NAME] =
 		g_param_spec_string ("name",
-		                     "Name",
-		                     "The tab's name",
+		                     "name",
+		                     "",
 		                     NULL,
-		                     G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+		                     G_PARAM_READABLE |
+				     G_PARAM_STATIC_STRINGS |
+				     G_PARAM_DEPRECATED);
 
+	/**
+	 * GeditTab:state:
+	 *
+	 * The state of the #GeditTab.
+	 */
 	properties[PROP_STATE] =
 		g_param_spec_enum ("state",
-		                   "State",
-		                   "The tab's state",
+		                   "state",
+		                   "",
 		                   GEDIT_TYPE_TAB_STATE,
 		                   GEDIT_TAB_STATE_NORMAL,
 		                   G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
+	/**
+	 * GeditTab:autosave:
+	 *
+	 * Whether the autosave feature is enabled.
+	 */
 	properties[PROP_AUTO_SAVE] =
 		g_param_spec_boolean ("autosave",
-		                      "Autosave",
-		                      "Autosave feature",
+		                      "autosave",
+		                      "",
 		                      TRUE,
 		                      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
+	/**
+	 * GeditTab:autosave-interval:
+	 *
+	 * Time in minutes between two autosaves.
+	 */
 	properties[PROP_AUTO_SAVE_INTERVAL] =
 		g_param_spec_int ("autosave-interval",
-		                  "AutosaveInterval",
-		                  "Time between two autosaves",
+		                  "autosave-interval",
+		                  "",
 		                  0,
 		                  G_MAXINT,
 		                  0,
 		                  G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
+	/**
+	 * GeditTab:can-close:
+	 *
+	 * Whether the tab can be closed.
+	 */
 	properties[PROP_CAN_CLOSE] =
 		g_param_spec_boolean ("can-close",
-		                      "Can close",
-		                      "Whether the tab can be closed",
+		                      "can-close",
+		                      "",
 		                      TRUE,
 		                      G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
-	g_object_class_install_properties (object_class, LAST_PROP, properties);
-
-	signals[DROP_URIS] =
-		g_signal_new_class_handler ("drop-uris",
-		                            G_TYPE_FROM_CLASS (klass),
-		                            G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION,
-		                            G_CALLBACK (gedit_tab_drop_uris),
-		                            NULL, NULL, NULL,
-		                            G_TYPE_NONE,
-		                            1,
-		                            G_TYPE_STRV);
+	g_object_class_install_properties (object_class, N_PROPERTIES, properties);
 }
 
 /**
  * gedit_tab_get_state:
- * @tab: a #GeditTab
+ * @tab: a #GeditTab.
  *
- * Gets the #GeditTabState of @tab.
- *
- * Returns: the #GeditTabState of @tab
+ * Returns: the current #GeditTabState of @tab.
  */
 GeditTabState
 gedit_tab_get_state (GeditTab *tab)
@@ -569,33 +582,18 @@ gedit_tab_set_state (GeditTab      *tab,
 }
 
 static void
-document_location_notify_handler (GtkSourceFile *file,
-				  GParamSpec    *pspec,
-				  GeditTab      *tab)
+document_modified_changed_cb (GtkTextBuffer *document,
+			      GeditTab      *tab)
 {
-	gedit_debug (DEBUG_TAB);
-
-	/* Notify the change in the location */
-	g_object_notify_by_pspec (G_OBJECT (tab), properties[PROP_NAME]);
-}
-
-static void
-document_shortname_notify_handler (TeplFile   *file,
-				   GParamSpec *pspec,
-				   GeditTab   *tab)
-{
-	gedit_debug (DEBUG_TAB);
-
-	/* Notify the change in the shortname */
-	g_object_notify_by_pspec (G_OBJECT (tab), properties[PROP_NAME]);
-}
-
-static void
-document_modified_changed (GtkTextBuffer *document,
-			   GeditTab      *tab)
-{
-	g_object_notify_by_pspec (G_OBJECT (tab), properties[PROP_NAME]);
 	g_object_notify_by_pspec (G_OBJECT (tab), properties[PROP_CAN_CLOSE]);
+}
+
+static void
+buffer_short_title_notify_cb (TeplBuffer *buffer,
+			      GParamSpec *pspec,
+			      GeditTab   *tab)
+{
+	g_object_notify_by_pspec (G_OBJECT (tab), properties[PROP_NAME]);
 }
 
 /* This function must be used carefully, and should be replaced by
@@ -733,121 +731,63 @@ unrecoverable_reverting_error_info_bar_response (GtkWidget *info_bar,
 	g_object_unref (loading_task);
 }
 
-#define MAX_MSG_LENGTH 100
-
 static void
 show_loading_info_bar (GTask *loading_task)
 {
 	LoaderData *data = g_task_get_task_data (loading_task);
-	TeplProgressInfoBar *bar;
 	GeditDocument *doc;
-	gchar *name;
-	gchar *dirname = NULL;
-	gchar *msg = NULL;
-	gchar *name_markup;
-	gchar *dirname_markup;
-	gint len;
+	TeplFile *file;
+	gchar *full_name;
+	gchar *text;
+	const gchar *icon_name;
+	TeplProgressInfoBar *bar;
 
 	if (data->tab->info_bar != NULL)
 	{
 		return;
 	}
 
-	gedit_debug (DEBUG_TAB);
-
 	doc = gedit_tab_get_document (data->tab);
+	file = tepl_buffer_get_file (TEPL_BUFFER (doc));
 
-	name = tepl_file_get_short_name (tepl_buffer_get_file (TEPL_BUFFER (doc)));
-	len = g_utf8_strlen (name, -1);
-
-	/* if the name is awfully long, truncate it and be done with it,
-	 * otherwise also show the directory (ellipsized if needed)
+	/* Show the full_name in the progress infobar. If the file loading is
+	 * stuck or is very slow, it is always useful to know the file location.
+	 * The filename and full path are _normally_ also available elsewhere in
+	 * the UI (in the tab label and window title), but if for some reason it
+	 * is not the case, then the progress infobar has all the infos
+	 * nevertheless.
 	 */
-	if (len > MAX_MSG_LENGTH)
-	{
-		gchar *str;
-
-		str = tepl_utils_str_middle_truncate (name, MAX_MSG_LENGTH);
-		g_free (name);
-		name = str;
-	}
-	else
-	{
-		GtkSourceFile *file = gedit_document_get_file (doc);
-		GFile *location = gtk_source_file_get_location (file);
-
-		if (location != NULL)
-		{
-			gchar *str = gedit_utils_location_get_dirname_for_display (location);
-
-			/* use the remaining space for the dir, but use a min of 20 chars
-			 * so that we do not end up with a dirname like "(a...b)".
-			 * This means that in the worst case when the filename is long 99
-			 * we have a title long 99 + 20, but I think it's a rare enough
-			 * case to be acceptable. It's justa darn title afterall :)
-			 */
-			dirname = tepl_utils_str_middle_truncate (str,
-								  MAX (20, MAX_MSG_LENGTH - len));
-			g_free (str);
-		}
-	}
-
-	name_markup = g_markup_printf_escaped ("<b>%s</b>", name);
+	full_name = tepl_file_get_full_name (file);
 
 	if (data->tab->state == GEDIT_TAB_STATE_REVERTING)
 	{
-		if (dirname != NULL)
-		{
-			dirname_markup = g_markup_printf_escaped ("<b>%s</b>", dirname);
-
-			/* Translators: the first %s is a file name (e.g. test.txt) the second one
-			   is a directory (e.g. ssh://master.gnome.org/home/users/paolo) */
-			msg = g_strdup_printf (_("Reverting %s from %s"),
-					       name_markup,
-					       dirname_markup);
-			g_free (dirname_markup);
-		}
-		else
-		{
-			msg = g_strdup_printf (_("Reverting %s"), name_markup);
-		}
-
-		bar = tepl_progress_info_bar_new ("document-revert", msg, TRUE);
+		/* Translators: the %s is a path to a file. */
+		text = g_strdup_printf (_("Reverting %s"), full_name);
+		icon_name = "document-revert";
 	}
 	else
 	{
-		if (dirname != NULL)
-		{
-			dirname_markup = g_markup_printf_escaped ("<b>%s</b>", dirname);
-
-			/* Translators: the first %s is a file name (e.g. test.txt) the second one
-			   is a directory (e.g. ssh://master.gnome.org/home/users/paolo) */
-			msg = g_strdup_printf (_("Loading %s from %s"),
-					       name_markup,
-					       dirname_markup);
-			g_free (dirname_markup);
-		}
-		else
-		{
-			msg = g_strdup_printf (_("Loading %s"), name_markup);
-		}
-
-		bar = tepl_progress_info_bar_new ("document-open", msg, TRUE);
+		/* Translators: the %s is a path to a file. */
+		text = g_strdup_printf (_("Loading %s"), full_name);
+		icon_name = "document-open";
 	}
+
+	bar = tepl_progress_info_bar_new (icon_name, NULL, TRUE);
+	tepl_progress_info_bar_set_text (bar, text);
 
 	g_signal_connect_object (bar,
 				 "response",
 				 G_CALLBACK (load_cancelled),
 				 loading_task,
-				 0);
+				 G_CONNECT_DEFAULT);
 
 	set_info_bar (data->tab, GTK_WIDGET (bar));
 
-	g_free (msg);
-	g_free (name);
-	g_free (name_markup);
-	g_free (dirname);
+	g_free (full_name);
+	g_free (text);
 }
+
+#define MAX_MSG_LENGTH 100
 
 static void
 show_saving_info_bar (GTask *saving_task)
@@ -1294,22 +1234,12 @@ view_focused_in (GtkWidget     *widget,
 }
 
 static void
-on_drop_uris (GeditView  *view,
-	      gchar     **uri_list,
-	      GeditTab   *tab)
-{
-	g_signal_emit (G_OBJECT (tab), signals[DROP_URIS], 0, uri_list);
-}
-
-static void
 gedit_tab_init (GeditTab *tab)
 {
 	gboolean auto_save;
 	gint auto_save_interval;
 	GeditDocument *doc;
 	GeditView *view;
-	GtkSourceFile *file;
-	TeplFile *tepl_file;
 
 	tab->state = GEDIT_TAB_STATE_NORMAL;
 
@@ -1339,25 +1269,18 @@ gedit_tab_init (GeditTab *tab)
 	doc = gedit_tab_get_document (tab);
 	g_object_set_data (G_OBJECT (doc), GEDIT_TAB_KEY, tab);
 
-	file = gedit_document_get_file (doc);
-	tepl_file = tepl_buffer_get_file (TEPL_BUFFER (doc));
-
-	g_signal_connect_object (file,
-				 "notify::location",
-				 G_CALLBACK (document_location_notify_handler),
+	g_signal_connect_object (doc,
+				 "modified-changed",
+				 G_CALLBACK (document_modified_changed_cb),
 				 tab,
-				 0);
+				 G_CONNECT_DEFAULT);
 
-	g_signal_connect_object (tepl_file,
-				 "notify::short-name",
-				 G_CALLBACK (document_shortname_notify_handler),
+	g_signal_connect_object (doc,
+				 "notify::tepl-short-title",
+				 G_CALLBACK (buffer_short_title_notify_cb),
 				 tab,
-				 0);
+				 G_CONNECT_DEFAULT);
 
-	g_signal_connect (doc,
-			  "modified_changed",
-			  G_CALLBACK (document_modified_changed),
-			  tab);
 
 	view = gedit_tab_get_view (tab);
 
@@ -1370,11 +1293,6 @@ gedit_tab_init (GeditTab *tab)
 				"realize",
 				G_CALLBACK (view_realized),
 				tab);
-
-	g_signal_connect (view,
-			  "drop-uris",
-			  G_CALLBACK (on_drop_uris),
-			  tab);
 }
 
 GeditTab *
@@ -1385,11 +1303,9 @@ _gedit_tab_new (void)
 
 /**
  * gedit_tab_get_view:
- * @tab: a #GeditTab
+ * @tab: a #GeditTab.
  *
- * Gets the #GeditView inside @tab.
- *
- * Returns: (transfer none): the #GeditView inside @tab
+ * Returns: (transfer none): the #GeditView of @tab.
  */
 GeditView *
 gedit_tab_get_view (GeditTab *tab)
@@ -1401,11 +1317,12 @@ gedit_tab_get_view (GeditTab *tab)
 
 /**
  * gedit_tab_get_document:
- * @tab: a #GeditTab
+ * @tab: a #GeditTab.
  *
- * Gets the #GeditDocument associated to @tab.
+ * Convenience function. It is equivalent to call gedit_tab_get_view() followed
+ * by gtk_text_view_get_buffer().
  *
- * Returns: (transfer none): the #GeditDocument associated to @tab
+ * Returns: (transfer none): the #GeditDocument associated to @tab.
  */
 GeditDocument *
 gedit_tab_get_document (GeditTab *tab)
@@ -1419,37 +1336,15 @@ gedit_tab_get_document (GeditTab *tab)
 	return GEDIT_DOCUMENT (gtk_text_view_get_buffer (GTK_TEXT_VIEW (view)));
 }
 
-#define MAX_DOC_NAME_LENGTH 40
-
 gchar *
 _gedit_tab_get_name (GeditTab *tab)
 {
 	GeditDocument *doc;
-	gchar *name;
-	gchar *docname;
-	gchar *tab_name;
 
 	g_return_val_if_fail (GEDIT_IS_TAB (tab), NULL);
 
 	doc = gedit_tab_get_document (tab);
-	name = tepl_file_get_short_name (tepl_buffer_get_file (TEPL_BUFFER (doc)));
-
-	/* Truncate the name so it doesn't get insanely wide. */
-	docname = tepl_utils_str_middle_truncate (name, MAX_DOC_NAME_LENGTH);
-
-	if (gtk_text_buffer_get_modified (GTK_TEXT_BUFFER (doc)))
-	{
-		tab_name = g_strdup_printf ("*%s", docname);
-	}
-	else
-	{
-		tab_name = g_strdup (docname);
-	}
-
-	g_free (docname);
-	g_free (name);
-
-	return tab_name;
+	return tepl_buffer_get_short_title (TEPL_BUFFER (doc));
 }
 
 gchar *
@@ -1530,64 +1425,40 @@ _gedit_tab_get_tooltip (GeditTab *tab)
 	return tip;
 }
 
-GdkPixbuf *
-_gedit_tab_get_icon (GeditTab *tab)
+const gchar *
+_gedit_tab_get_icon_name (GeditTab *tab)
 {
-	const gchar *icon_name;
-	GdkPixbuf *pixbuf = NULL;
-
 	g_return_val_if_fail (GEDIT_IS_TAB (tab), NULL);
 
 	switch (tab->state)
 	{
 		case GEDIT_TAB_STATE_PRINTING:
-			icon_name = "printer-printing-symbolic";
-			break;
+			return "printer-printing-symbolic";
 
 		case GEDIT_TAB_STATE_SHOWING_PRINT_PREVIEW:
-			icon_name = "printer-symbolic";
-			break;
+			return "printer-symbolic";
 
 		case GEDIT_TAB_STATE_LOADING_ERROR:
 		case GEDIT_TAB_STATE_REVERTING_ERROR:
 		case GEDIT_TAB_STATE_SAVING_ERROR:
 		case GEDIT_TAB_STATE_GENERIC_ERROR:
-			icon_name = "dialog-error-symbolic";
-			break;
+			return "dialog-error-symbolic";
 
 		case GEDIT_TAB_STATE_EXTERNALLY_MODIFIED_NOTIFICATION:
-			icon_name = "dialog-warning-symbolic";
-			break;
+			return "dialog-warning-symbolic";
 
 		default:
-			icon_name = NULL;
+			break;
 	}
 
-	if (icon_name != NULL)
-	{
-		GdkScreen *screen;
-		GtkIconTheme *theme;
-		gint icon_size;
-
-		screen = gtk_widget_get_screen (GTK_WIDGET (tab));
-		theme = gtk_icon_theme_get_for_screen (screen);
-		g_return_val_if_fail (theme != NULL, NULL);
-
-		gtk_icon_size_lookup (GTK_ICON_SIZE_MENU, NULL, &icon_size);
-
-		pixbuf = gtk_icon_theme_load_icon (theme, icon_name, icon_size, 0, NULL);
-	}
-
-	return pixbuf;
+	return NULL;
 }
 
 /**
  * gedit_tab_get_from_document:
- * @doc: a #GeditDocument
+ * @doc: a #GeditDocument.
  *
- * Gets the #GeditTab associated with @doc.
- *
- * Returns: (transfer none): the #GeditTab associated with @doc
+ * Returns: (transfer none) (nullable): the #GeditTab associated with @doc.
  */
 GeditTab *
 gedit_tab_get_from_document (GeditDocument *doc)
@@ -2071,14 +1942,49 @@ load_finish (GeditTab     *tab,
 	return g_task_propagate_boolean (G_TASK (result), NULL);
 }
 
-void
-_gedit_tab_load (GeditTab                *tab,
-		 GFile                   *location,
-		 const GtkSourceEncoding *encoding,
-		 gint                     line_pos,
-		 gint                     column_pos,
-		 gboolean                 create)
+static void
+tab_load_cb (GObject      *source_object,
+	     GAsyncResult *result,
+	     gpointer      user_data)
 {
+	GeditTab *tab = GEDIT_TAB (source_object);
+	load_finish (tab, result);
+}
+
+/**
+ * gedit_tab_load_file:
+ * @tab: a #GeditTab.
+ * @location: the #GFile to load.
+ * @encoding: (nullable): a #GtkSourceEncoding, or %NULL.
+ * @line_pos: the line position to visualize.
+ * @column_pos: the column position to visualize.
+ * @create: %TRUE to show no errors if @location doesn't exist.
+ *
+ * This function tries to load @location into @tab. It is usually called only on
+ * a newly-created tab.
+ *
+ * If @location doesn't exist, the behavior depends on @create:
+ * - If @create is %FALSE, an error is shown.
+ * - If @create is %TRUE, an empty #GeditDocument is created without error (but
+ *   the file is not yet created on disk).
+ *
+ * The @tab needs to be in %GEDIT_TAB_STATE_NORMAL. The previous
+ * #GtkTextBuffer's content is lost.
+ *
+ * Since: 45
+ */
+void
+gedit_tab_load_file (GeditTab                *tab,
+		     GFile                   *location,
+		     const GtkSourceEncoding *encoding,
+		     gint                     line_pos,
+		     gint                     column_pos,
+		     gboolean                 create)
+{
+	g_return_if_fail (GEDIT_IS_TAB (tab));
+	g_return_if_fail (G_IS_FILE (location));
+	g_return_if_fail (tab->state == GEDIT_TAB_STATE_NORMAL);
+
 	if (tab->cancellable != NULL)
 	{
 		g_cancellable_cancel (tab->cancellable);
@@ -2094,7 +2000,7 @@ _gedit_tab_load (GeditTab                *tab,
 		    column_pos,
 		    create,
 		    tab->cancellable,
-		    (GAsyncReadyCallback) load_finish,
+		    tab_load_cb,
 		    NULL);
 }
 
@@ -2142,13 +2048,33 @@ load_stream_async (GeditTab                *tab,
 	launch_loader (loading_task, encoding);
 }
 
+/**
+ * gedit_tab_load_stream:
+ * @tab: a #GeditTab.
+ * @stream: the #GInputStream to load, e.g. stdin.
+ * @encoding: (nullable): a #GtkSourceEncoding, or %NULL.
+ * @line_pos: the line position to visualize.
+ * @column_pos: the column position to visualize.
+ *
+ * Loads @stream into @tab. This function is usually called only on a
+ * newly-created tab.
+ *
+ * The @tab needs to be in %GEDIT_TAB_STATE_NORMAL. The previous
+ * #GtkTextBuffer's content is lost.
+ *
+ * Since: 45
+ */
 void
-_gedit_tab_load_stream (GeditTab                *tab,
-			GInputStream            *stream,
-			const GtkSourceEncoding *encoding,
-			gint                     line_pos,
-			gint                     column_pos)
+gedit_tab_load_stream (GeditTab                *tab,
+		       GInputStream            *stream,
+		       const GtkSourceEncoding *encoding,
+		       gint                     line_pos,
+		       gint                     column_pos)
 {
+	g_return_if_fail (GEDIT_IS_TAB (tab));
+	g_return_if_fail (G_IS_INPUT_STREAM (stream));
+	g_return_if_fail (tab->state == GEDIT_TAB_STATE_NORMAL);
+
 	if (tab->cancellable != NULL)
 	{
 		g_cancellable_cancel (tab->cancellable);
@@ -2163,7 +2089,7 @@ _gedit_tab_load_stream (GeditTab                *tab,
 			   line_pos,
 			   column_pos,
 			   tab->cancellable,
-			   (GAsyncReadyCallback) load_finish,
+			   tab_load_cb,
 			   NULL);
 }
 
@@ -2222,7 +2148,7 @@ _gedit_tab_revert (GeditTab *tab)
 
 	revert_async (tab,
 		      tab->cancellable,
-		      (GAsyncReadyCallback) load_finish,
+		      tab_load_cb,
 		      NULL);
 }
 
@@ -2953,12 +2879,10 @@ _gedit_tab_get_can_close (GeditTab *tab)
 
 /**
  * gedit_tab_get_auto_save_enabled:
- * @tab: a #GeditTab
+ * @tab: a #GeditTab.
  *
- * Gets the current state for the autosave feature
- *
- * Return value: %TRUE if the autosave is enabled, else %FALSE
- **/
+ * Returns: the value of the #GeditTab:autosave property.
+ */
 gboolean
 gedit_tab_get_auto_save_enabled	(GeditTab *tab)
 {
@@ -2971,12 +2895,14 @@ gedit_tab_get_auto_save_enabled	(GeditTab *tab)
 
 /**
  * gedit_tab_set_auto_save_enabled:
- * @tab: a #GeditTab
- * @enable: enable (%TRUE) or disable (%FALSE) auto save
+ * @tab: a #GeditTab.
+ * @enable: the new value.
  *
- * Enables or disables the autosave feature. It does not install an
- * autosave timeout if the document is new or is read-only
- **/
+ * Sets the #GeditTab:autosave property.
+ *
+ * It does not install an autosave timeout if the document is new or is
+ * read-only.
+ */
 void
 gedit_tab_set_auto_save_enabled	(GeditTab *tab,
 				 gboolean  enable)
@@ -2997,12 +2923,10 @@ gedit_tab_set_auto_save_enabled	(GeditTab *tab,
 
 /**
  * gedit_tab_get_auto_save_interval:
- * @tab: a #GeditTab
+ * @tab: a #GeditTab.
  *
- * Gets the current interval for the autosaves
- *
- * Return value: the value of the autosave
- **/
+ * Returns: the value of the #GeditTab:autosave-interval property.
+ */
 gint
 gedit_tab_get_auto_save_interval (GeditTab *tab)
 {
@@ -3015,10 +2939,10 @@ gedit_tab_get_auto_save_interval (GeditTab *tab)
 
 /**
  * gedit_tab_set_auto_save_interval:
- * @tab: a #GeditTab
- * @interval: the new interval
+ * @tab: a #GeditTab.
+ * @interval: the new value.
  *
- * Sets the interval for the autosave feature.
+ * Sets the #GeditTab:autosave-interval property.
  */
 void
 gedit_tab_set_auto_save_interval (GeditTab *tab,
@@ -3037,6 +2961,17 @@ gedit_tab_set_auto_save_interval (GeditTab *tab,
 	}
 }
 
+/**
+ * gedit_tab_set_info_bar:
+ * @tab: a #GeditTab.
+ * @info_bar: a #GtkInfoBar.
+ *
+ * Sets the #GtkInfoBar of @tab. Note that there can be only one #GtkInfoBar per
+ * #GeditTab. If there was already an infobar set, it is destroyed and replaced
+ * by the new one.
+ *
+ * See also #TeplInfoBar, it permits to create a #GtkInfoBar more easily.
+ */
 void
 gedit_tab_set_info_bar (GeditTab  *tab,
                         GtkWidget *info_bar)

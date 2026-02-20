@@ -3,11 +3,9 @@
 <TITLE>GeditApp</TITLE>
 GeditApp
 gedit_app_create_window
-gedit_app_set_window_title
 gedit_app_get_main_windows
-gedit_app_get_documents
 gedit_app_get_views
-gedit_app_process_window_event
+gedit_app_get_documents
 gedit_app_show_help
 <SUBSECTION Standard>
 GEDIT_APP
@@ -52,13 +50,13 @@ gedit_commands_save_all_documents
 GeditDocument
 gedit_document_new
 gedit_document_get_file
+gedit_document_get_content_type
 gedit_document_get_mime_type
 gedit_document_set_language
-gedit_document_get_content_type
 gedit_document_get_metadata
 gedit_document_set_metadata
-gedit_document_set_search_context
 gedit_document_get_search_context
+gedit_document_set_search_context
 <SUBSECTION Standard>
 GEDIT_DOCUMENT
 GEDIT_IS_DOCUMENT
@@ -150,8 +148,6 @@ GeditMessagePrivate
 <FILE>gedit-statusbar</FILE>
 <TITLE>GeditStatusbar</TITLE>
 GeditStatusbar
-gedit_statusbar_new
-gedit_statusbar_set_window_state
 gedit_statusbar_flash_message
 <SUBSECTION Standard>
 GEDIT_STATUSBAR
@@ -168,6 +164,8 @@ GEDIT_STATUSBAR_GET_CLASS
 <TITLE>GeditTab</TITLE>
 GeditTab
 GeditTabState
+gedit_tab_load_file
+gedit_tab_load_stream
 gedit_tab_get_view
 gedit_tab_get_document
 gedit_tab_get_from_document
@@ -226,25 +224,23 @@ gedit_view_activatable_get_type
 GeditWindow
 GeditWindowState
 gedit_window_create_tab
-gedit_window_create_tab_from_location
-gedit_window_create_tab_from_stream
 gedit_window_close_tab
 gedit_window_close_all_tabs
 gedit_window_close_tabs
-gedit_window_get_active_tab
 gedit_window_set_active_tab
+gedit_window_get_active_tab
 gedit_window_get_active_view
 gedit_window_get_active_document
+gedit_window_get_tab_from_location
+gedit_window_get_views
 gedit_window_get_documents
 gedit_window_get_unsaved_documents
-gedit_window_get_views
-gedit_window_get_group
 gedit_window_get_side_panel
 gedit_window_get_bottom_panel
 gedit_window_get_statusbar
-gedit_window_get_state
-gedit_window_get_tab_from_location
+gedit_window_get_group
 gedit_window_get_message_bus
+gedit_window_get_state
 <SUBSECTION Standard>
 GEDIT_WINDOW
 GEDIT_IS_WINDOW
@@ -277,7 +273,6 @@ gedit_window_activatable_get_type
 <SECTION>
 <FILE>gedit-debug</FILE>
 GeditDebugSection
-DEBUG_VIEW
 DEBUG_PREFS
 DEBUG_WINDOW
 DEBUG_PANEL
@@ -318,12 +313,10 @@ gedit_menu_extension_get_type
 <SECTION>
 <FILE>gedit-utils</FILE>
 gedit_utils_menu_position_under_tree_view
-gedit_utils_set_atk_name_description
 gedit_utils_basename_for_display
 gedit_utils_drop_get_uris
 gedit_utils_get_compression_type_from_content_type
 gedit_utils_is_valid_location
-gedit_utils_location_get_dirname_for_display
 gedit_utils_set_direct_save_filename
 gedit_utils_newline_type_to_string
 </SECTION>

@@ -2,10 +2,16 @@
       xmlns:its="http://www.w3.org/2005/11/its"
       type="guide"
       id="index">
+
+  <info>
+    <title type="link" role="trail">gedit</title>
+    <title type="link">gedit</title>
+    <title type="text">gedit</title>
+  </info>
   
   <title>
-    <media type="image" mime="image/png" src="figures/gedit-icon.png" its:translate="no" />
-    gedit
+    <media type="image" its:translate="no" width="24px" height="24px"
+      src="figures/gedit-icon-24x24.png" /> gedit
   </title>
 
   <links type="topic" groups="intro-first intro-second" />

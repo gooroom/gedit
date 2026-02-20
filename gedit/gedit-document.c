@@ -1,5 +1,4 @@
 /*
- * gedit-document.c
  * This file is part of gedit
  *
  * Copyright (C) 1998, 1999 Alex Roberts, Evan Lawrence
@@ -30,6 +29,15 @@
 #include "gedit-debug.h"
 #include "gedit-utils.h"
 
+/**
+ * SECTION:gedit-document
+ * @Title: GeditDocument
+ * @Short_description: A document
+ *
+ * #GeditDocument is a subclass of #TeplBuffer. It contains the content of a
+ * document.
+ */
+
 #define NO_LANGUAGE_NAME "_NORMAL_"
 
 static void	gedit_document_loaded_real	(GeditDocument *doc);
@@ -48,6 +56,8 @@ typedef struct
 	gchar *content_type;
 
 	GDateTime *time_of_last_save_or_load;
+
+	TeplSettingsBindingGroup *settings_binding_group;
 
 	/* The search context for the incremental search, or the search and
 	 * replace. They are mutually exclusive.
@@ -191,6 +201,13 @@ gedit_document_dispose (GObject *object)
 
 	gedit_debug (DEBUG_DOCUMENT);
 
+	if (priv->settings_binding_group != NULL)
+	{
+		tepl_settings_binding_group_unbind (priv->settings_binding_group, object);
+		tepl_settings_binding_group_free (priv->settings_binding_group);
+		priv->settings_binding_group = NULL;
+	}
+
 	/* Metadata must be saved here and not in finalize because the language
 	 * is gone by the time finalize runs.
 	 */
@@ -278,6 +295,7 @@ static void
 gedit_document_constructed (GObject *object)
 {
 	GeditDocument *doc = GEDIT_DOCUMENT (object);
+	GeditDocumentPrivate *priv = gedit_document_get_instance_private (doc);
 	GeditSettings *settings;
 	GSettings *editor_settings;
 
@@ -288,6 +306,7 @@ gedit_document_constructed (GObject *object)
 	g_settings_bind (editor_settings, GEDIT_SETTINGS_ENSURE_TRAILING_NEWLINE,
 			 doc, "implicit-trailing-newline",
 			 G_SETTINGS_BIND_GET | G_SETTINGS_BIND_NO_SENSITIVITY);
+	tepl_settings_binding_group_add (priv->settings_binding_group, "implicit-trailing-newline");
 
 	G_OBJECT_CLASS (gedit_document_parent_class)->constructed (object);
 }
@@ -351,9 +370,9 @@ gedit_document_class_init (GeditDocumentClass *klass)
 
 	/**
 	 * GeditDocument::load:
-	 * @document: the #GeditDocument.
+	 * @document: the #GeditDocument emitting the signal.
 	 *
-	 * The "load" signal is emitted at the beginning of a file loading.
+	 * The ::load signal is emitted at the beginning of a file loading.
 	 *
 	 * Before gedit 3.14 this signal contained parameters to configure the
 	 * file loading (the location, encoding, etc). Plugins should not need
@@ -369,9 +388,9 @@ gedit_document_class_init (GeditDocumentClass *klass)
 
 	/**
 	 * GeditDocument::loaded:
-	 * @document: the #GeditDocument.
+	 * @document: the #GeditDocument emitting the signal.
 	 *
-	 * The "loaded" signal is emitted at the end of a successful file
+	 * The ::loaded signal is emitted at the end of a successful file
 	 * loading.
 	 *
 	 * Before gedit 3.14 this signal contained a #GError parameter, and the
@@ -388,9 +407,9 @@ gedit_document_class_init (GeditDocumentClass *klass)
 
 	/**
 	 * GeditDocument::save:
-	 * @document: the #GeditDocument.
+	 * @document: the #GeditDocument emitting the signal.
 	 *
-	 * The "save" signal is emitted at the beginning of a file saving.
+	 * The ::save signal is emitted at the beginning of a file saving.
 	 *
 	 * Before gedit 3.14 this signal contained parameters to configure the
 	 * file saving (the location, encoding, etc). Plugins should not need
@@ -406,9 +425,9 @@ gedit_document_class_init (GeditDocumentClass *klass)
 
 	/**
 	 * GeditDocument::saved:
-	 * @document: the #GeditDocument.
+	 * @document: the #GeditDocument emitting the signal.
 	 *
-	 * The "saved" signal is emitted at the end of a successful file saving.
+	 * The ::saved signal is emitted at the end of a successful file saving.
 	 *
 	 * Before gedit 3.14 this signal contained a #GError parameter, and the
 	 * signal was also emitted if an error occurred. To save a document, a
@@ -577,6 +596,7 @@ gedit_document_init (GeditDocument *doc)
 	priv->content_type = get_default_content_type ();
 	priv->language_set_by_user = FALSE;
 	priv->empty_search = TRUE;
+	priv->settings_binding_group = tepl_settings_binding_group_new ();
 
 	update_time_of_last_save_or_load (doc);
 
@@ -601,18 +621,19 @@ gedit_document_init (GeditDocument *doc)
 	g_settings_bind (editor_settings, GEDIT_SETTINGS_MAX_UNDO_ACTIONS,
 	                 doc, "max-undo-levels",
 	                 G_SETTINGS_BIND_GET | G_SETTINGS_BIND_NO_SENSITIVITY);
+	tepl_settings_binding_group_add (priv->settings_binding_group, "max-undo-levels");
 
 	g_settings_bind (editor_settings, GEDIT_SETTINGS_SYNTAX_HIGHLIGHTING,
 			 doc, "highlight-syntax",
 			 G_SETTINGS_BIND_GET | G_SETTINGS_BIND_NO_SENSITIVITY);
+	tepl_settings_binding_group_add (priv->settings_binding_group, "highlight-syntax");
 
 	g_settings_bind (editor_settings, GEDIT_SETTINGS_BRACKET_MATCHING,
 	                 doc, "highlight-matching-brackets",
 	                 G_SETTINGS_BIND_GET | G_SETTINGS_BIND_NO_SENSITIVITY);
+	tepl_settings_binding_group_add (priv->settings_binding_group, "highlight-matching-brackets");
 
-	tepl_buffer_provide_style_scheme_id_gsetting (TEPL_BUFFER (doc),
-						      editor_settings, GEDIT_SETTINGS_SCHEME,
-						      TRUE);
+	tepl_buffer_connect_style_scheme_settings (TEPL_BUFFER (doc));
 
 	g_signal_connect (doc,
 			  "notify::content-type",
@@ -620,6 +641,11 @@ gedit_document_init (GeditDocument *doc)
 			  NULL);
 }
 
+/**
+ * gedit_document_new:
+ *
+ * Returns: (transfer full): a new #GeditDocument object.
+ */
 GeditDocument *
 gedit_document_new (void)
 {
@@ -734,6 +760,13 @@ set_content_type (GeditDocument *doc,
 	}
 }
 
+/**
+ * gedit_document_get_content_type:
+ * @doc: a #GeditDocument.
+ *
+ * Returns: (transfer full): the value of the #GeditDocument:content-type
+ *   property.
+ */
 gchar *
 gedit_document_get_content_type (GeditDocument *doc)
 {
@@ -750,8 +783,9 @@ gedit_document_get_content_type (GeditDocument *doc)
  * gedit_document_get_mime_type:
  * @doc: a #GeditDocument.
  *
- * Note: this never returns %NULL.
- **/
+ * Returns: (transfer full) (not nullable): the value of the
+ *   #GeditDocument:mime-type property.
+ */
 gchar *
 gedit_document_get_mime_type (GeditDocument *doc)
 {
@@ -960,9 +994,11 @@ _gedit_document_needs_saving (GeditDocument *doc)
 
 /**
  * gedit_document_set_language:
- * @doc:
- * @lang: (allow-none):
- **/
+ * @doc: a #GeditDocument.
+ * @lang: (nullable): a #GtkSourceLanguage.
+ *
+ * Like gtk_source_buffer_set_language(), but this function is preferred.
+ */
 void
 gedit_document_set_language (GeditDocument     *doc,
 			     GtkSourceLanguage *lang)
@@ -1004,12 +1040,10 @@ _gedit_document_get_seconds_since_last_save_or_load (GeditDocument *doc)
 
 /**
  * gedit_document_get_metadata:
- * @doc: a #GeditDocument
- * @key: name of the key
+ * @doc: a #GeditDocument.
+ * @key: the name of the key.
  *
- * Gets the metadata assigned to @key.
- *
- * Returns: the value assigned to @key. Free with g_free().
+ * Returns: (transfer full) (nullable): the metadata assigned to @key.
  */
 gchar *
 gedit_document_get_metadata (GeditDocument *doc,
@@ -1031,11 +1065,11 @@ gedit_document_get_metadata (GeditDocument *doc,
 }
 
 /**
- * gedit_document_set_metadata:
- * @doc: a #GeditDocument
- * @first_key: name of the first key to set
- * @...: (allow-none): value for the first key, followed optionally by more key/value pairs,
- * followed by %NULL.
+ * gedit_document_set_metadata: (skip)
+ * @doc: a #GeditDocument.
+ * @first_key: the name of the first key to set.
+ * @...: value for the first key, followed optionally by more key/value pairs,
+ *   followed by %NULL.
  *
  * Sets metadata on a document.
  */
@@ -1123,8 +1157,8 @@ connect_search_settings (GeditDocument *doc)
 
 /**
  * gedit_document_set_search_context:
- * @doc: a #GeditDocument
- * @search_context: (allow-none): the new #GtkSourceSearchContext
+ * @doc: a #GeditDocument.
+ * @search_context: (nullable): the new #GtkSourceSearchContext.
  *
  * Sets the new search context for the document. Use this function only when the
  * search occurrences are highlighted. So this function should not be used for
@@ -1185,7 +1219,7 @@ gedit_document_set_search_context (GeditDocument          *doc,
 
 /**
  * gedit_document_get_search_context:
- * @doc: a #GeditDocument
+ * @doc: a #GeditDocument.
  *
  * Gets the search context. Use this function only if you have used
  * gedit_document_set_search_context() before. You should not alter other search
@@ -1193,8 +1227,8 @@ gedit_document_set_search_context (GeditDocument          *doc,
  * One way to verify that is to compare the search settings object, or to mark
  * the search context with g_object_set_data().
  *
- * Returns: (transfer none): the current search context of the document, or NULL
- * if there is no current search context.
+ * Returns: (transfer none) (nullable): the current search context of the
+ *   document, or NULL if there is no current search context.
  */
 GtkSourceSearchContext *
 gedit_document_get_search_context (GeditDocument *doc)

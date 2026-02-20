@@ -1,7 +1,6 @@
 gedit_help_sources = [
   'gedit-brief-intro.page',
   'gedit-change-color-scheme.page',
-  'gedit-change-default-font.page',
   'gedit-close-file.page',
   'gedit-create-new-file.page',
   'gedit-edit-as-root.page',
@@ -16,18 +15,13 @@ gedit_help_sources = [
   'gedit-plugin-guide.page',
   'gedit-plugins-change-case.page',
   'gedit-plugins-doc-stats.page',
-  'gedit-plugins-external-tools.page',
   'gedit-plugins-file-browser.page',
   'gedit-plugins-insert-date-time.page',
   'gedit-plugins-install.page',
   'gedit-plugins-modelines.page',
-  'gedit-plugins-pyconsole.page',
-  'gedit-plugins-quick-open.page',
-  'gedit-plugins-snippets.page',
   'gedit-plugins-sort.page',
-  'gedit-printing-order.page',
+  'gedit-plugins-text-size.page',
   'gedit-printing.page',
-  'gedit-printing-select.page',
   'gedit-save-file.page',
   'gedit-search.page',
   'gedit-search-and-replace.page',
@@ -40,8 +34,7 @@ gedit_help_sources = [
 ]
 
 gedit_help_media = [
-  'figures/gedit-html-snippet.png',
-  'figures/gedit-icon.png',
+  'figures/gedit-icon-24x24.png',
   'figures/gedit3-screenshot.png',
 ]
 

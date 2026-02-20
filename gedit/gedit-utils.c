@@ -1,5 +1,4 @@
 /*
- * gedit-utils.c
  * This file is part of gedit
  *
  * Copyright (C) 1998, 1999 Alex Roberts, Evan Lawrence
@@ -59,34 +58,6 @@ gedit_utils_menu_position_under_tree_view (GtkTreeView  *tree_view,
 	return TRUE;
 }
 
-/**
- * gedit_utils_set_atk_name_description:
- * @widget: The Gtk widget for which name/description to be set
- * @name: Atk name string
- * @description: Atk description string
- *
- * This function sets up name and description
- * for a specified gtk widget.
- */
-void
-gedit_utils_set_atk_name_description (GtkWidget   *widget,
-				      const gchar *name,
-				      const gchar *description)
-{
-	AtkObject *aobj;
-
-	aobj = gtk_widget_get_accessible (widget);
-
-	if (!(GTK_IS_ACCESSIBLE (aobj)))
-		return;
-
-	if (name)
-		atk_object_set_name (aobj, name);
-
-	if (description)
-		atk_object_set_description (aobj, description);
-}
-
 static gchar *
 uri_get_dirname (const gchar *uri)
 {
@@ -113,25 +84,24 @@ uri_get_dirname (const gchar *uri)
 	return res;
 }
 
-/**
- * gedit_utils_location_get_dirname_for_display:
+/*
+ * _gedit_utils_location_get_dirname_for_display:
  * @location: the location
  *
- * Returns a string suitable to be displayed in the UI indicating
- * the name of the directory where the file is located.
- * For remote files it may also contain the hostname etc.
- * For local files it tries to replace the home dir with ~.
+ * Returns a string suitable to be displayed in the UI indicating the name of
+ * the directory where the file is located. For remote files it may also contain
+ * the hostname etc. For local files it tries to replace the home dir with `~`.
  *
- * Returns: (transfer full): a string to display the dirname
+ * Returns: (transfer full): a string to display the dirname.
  */
 gchar *
-gedit_utils_location_get_dirname_for_display (GFile *location)
+_gedit_utils_location_get_dirname_for_display (GFile *location)
 {
 	gchar *uri;
 	gchar *res;
 	GMount *mount;
 
-	g_return_val_if_fail (location != NULL, NULL);
+	g_return_val_if_fail (G_IS_FILE (location), NULL);
 
 	/* we use the parse name, that is either the local path
 	 * or an uri but which is utf8 safe */
@@ -148,7 +118,11 @@ gedit_utils_location_get_dirname_for_display (GFile *location)
 		mount_name = g_mount_get_name (mount);
 		g_object_unref (mount);
 
-		/* obtain the "path" part of the uri */
+		/* Obtain the "path" part of the uri.
+		 * Note that g_uri_split() can give a different result for path,
+		 * especially when tepl_utils_decode_uri() returns a NULL path.
+		 * So it needs further work to get rid of tepl_utils_decode_uri().
+		 */
 		tepl_utils_decode_uri (uri,
 				       NULL, NULL,
 				       NULL, NULL,

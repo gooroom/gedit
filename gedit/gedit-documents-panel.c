@@ -28,13 +28,13 @@
 #include "gedit-debug.h"
 #include "gedit-document.h"
 #include "gedit-document-private.h"
-#include "gedit-multi-notebook.h"
 #include "gedit-notebook.h"
 #include "gedit-notebook-popup-menu.h"
 #include "gedit-tab.h"
 #include "gedit-tab-private.h"
 #include "gedit-utils.h"
 #include "gedit-commands-private.h"
+#include "gedit-window-private.h"
 
 typedef struct _GeditDocumentsGenericRow GeditDocumentsGenericRow;
 typedef struct _GeditDocumentsGenericRow GeditDocumentsGroupRow;
@@ -144,11 +144,9 @@ static GParamSpec *properties[LAST_PROP];
 
 G_DEFINE_TYPE (GeditDocumentsPanel, gedit_documents_panel, GTK_TYPE_BOX)
 
-static const GtkTargetEntry panel_targets [] = {
-	{"GEDIT_DOCUMENTS_DOCUMENT_ROW", GTK_TARGET_SAME_APP, 0},
+static const GtkTargetEntry panel_targets[] = {
+	{ (gchar *) "GEDIT_DOCUMENTS_DOCUMENT_ROW", GTK_TARGET_SAME_APP, 0 },
 };
-
-#define MAX_DOC_NAME_LENGTH 60
 
 #define ROW_OUTSIDE_LISTBOX -1
 
@@ -439,22 +437,6 @@ group_row_refresh_visibility (GeditDocumentsPanel *panel)
 	gtk_widget_set_visible (first_group_row, !notebook_is_unique);
 }
 
-static gchar *
-doc_get_name (GeditDocument *doc)
-{
-	gchar *name;
-	gchar *docname;
-
-	name = tepl_file_get_short_name (tepl_buffer_get_file (TEPL_BUFFER (doc)));
-
-	/* Truncate the name so it doesn't get insanely wide. */
-	docname = tepl_utils_str_middle_truncate (name, MAX_DOC_NAME_LENGTH);
-
-	g_free (name);
-
-	return docname;
-}
-
 static void
 document_row_sync_tab_name_and_icon (GeditTab   *tab,
                                      GParamSpec *pspec,
@@ -464,10 +446,10 @@ document_row_sync_tab_name_and_icon (GeditTab   *tab,
 	GeditDocument *doc;
 	GtkSourceFile *file;
 	gchar *name;
-	GdkPixbuf *pixbuf;
+	const gchar *icon_name;
 
 	doc = gedit_tab_get_document (tab);
-	name = doc_get_name (doc);
+	name = tepl_file_get_short_name (tepl_buffer_get_file (TEPL_BUFFER (doc)));
 
 	if (!gtk_text_buffer_get_modified (GTK_TEXT_BUFFER (doc)))
 	{
@@ -505,11 +487,13 @@ document_row_sync_tab_name_and_icon (GeditTab   *tab,
 	}
 
 	/* Update header of the row */
-	pixbuf = _gedit_tab_get_icon (tab);
+	icon_name = _gedit_tab_get_icon_name (tab);
 
-	if (pixbuf)
+	if (icon_name != NULL)
 	{
-		gtk_image_set_from_pixbuf (GTK_IMAGE (document_row->image), pixbuf);
+		gtk_image_set_from_icon_name (GTK_IMAGE (document_row->image),
+					      icon_name,
+					      GTK_ICON_SIZE_MENU);
 	}
 	else
 	{
@@ -735,7 +719,7 @@ set_window (GeditDocumentsPanel *panel,
             GeditWindow         *window)
 {
 	panel->window = g_object_ref (window);
-	panel->mnb = GEDIT_MULTI_NOTEBOOK (_gedit_window_get_multi_notebook (window));
+	panel->mnb = _gedit_window_get_multi_notebook (window);
 
 	g_signal_connect (panel->mnb,
 	                  "notebook-removed",
@@ -928,7 +912,7 @@ panel_on_drag_begin (GtkWidget      *widget,
 
 	label = gtk_label_new (NULL);
 	gtk_label_set_markup (GTK_LABEL (label), name);
-	gtk_label_set_ellipsize (GTK_LABEL (label), PANGO_ELLIPSIZE_END);
+	gtk_label_set_ellipsize (GTK_LABEL (label), PANGO_ELLIPSIZE_MIDDLE);
 	gtk_widget_set_halign (label, GTK_ALIGN_START);
 	gtk_widget_set_valign (label, GTK_ALIGN_CENTER);
 
@@ -1216,15 +1200,15 @@ panel_on_drag_data_received (GtkWidget        *widget,
 {
 	GeditDocumentsPanel *panel = GEDIT_DOCUMENTS_PANEL (widget);
 	GeditDocumentsPanel *source_panel = NULL;
-
 	GtkWidget *source_widget = gtk_drag_get_source_widget (context);
+	GtkWidget **source_row;
 
 	if (GEDIT_IS_DOCUMENTS_PANEL (source_widget))
 	{
 		source_panel = GEDIT_DOCUMENTS_PANEL (source_widget);
 	}
 
-	GtkWidget **source_row = (void*) gtk_selection_data_get_data (data);
+	source_row = (void*) gtk_selection_data_get_data (data);
 
 	if (source_panel &&
 	    gtk_selection_data_get_target (data) == gdk_atom_intern_static_string ("GEDIT_DOCUMENTS_DOCUMENT_ROW"))
@@ -1433,6 +1417,10 @@ gedit_documents_panel_init (GeditDocumentsPanel *panel)
 	panel->row_destination_index = ROW_OUTSIDE_LISTBOX;
 	panel->row_source_row_offset = 0;
 	panel->is_on_drag = FALSE;
+
+	/* Some widget config */
+	gtk_widget_set_hexpand (GTK_WIDGET (panel), TRUE);
+	gtk_widget_set_vexpand (GTK_WIDGET (panel), TRUE);
 }
 
 GtkWidget *
@@ -1558,7 +1546,7 @@ row_create (GtkWidget *row)
 	gtk_container_add (GTK_CONTAINER (event_box), generic_row->box);
 
 	generic_row->label = gtk_label_new (NULL);
-	gtk_label_set_ellipsize (GTK_LABEL (generic_row->label), PANGO_ELLIPSIZE_END);
+	gtk_label_set_ellipsize (GTK_LABEL (generic_row->label), PANGO_ELLIPSIZE_MIDDLE);
 	gtk_widget_set_halign (generic_row->label, GTK_ALIGN_START);
 	gtk_widget_set_valign (generic_row->label, GTK_ALIGN_CENTER);
 

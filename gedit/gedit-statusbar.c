@@ -18,22 +18,16 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.h"
 #include "gedit-statusbar.h"
-#include <glib/gi18n.h>
-#include "gedit-app.h"
-#include "gedit-status-menu-button.h"
+#include <tepl/tepl.h>
+#include "gedit-settings.h"
 
 struct _GeditStatusbar
 {
 	GtkStatusbar parent_instance;
 
-	GtkWidget *error_frame;
-	GtkWidget *error_image;
-	GtkWidget *state_frame;
-	GtkWidget *load_image;
-	GtkWidget *save_image;
-	GtkWidget *print_image;
+	/* Weak ref */
+	GeditWindow *window;
 
 	/* tmp flash timeout data */
 	guint flash_timeout;
@@ -46,9 +40,61 @@ struct _GeditStatusbar
 G_DEFINE_TYPE (GeditStatusbar, gedit_statusbar, GTK_TYPE_STATUSBAR)
 
 static void
+update_visibility (GeditStatusbar *statusbar)
+{
+	GeditSettings *settings;
+	GSettings *ui_settings;
+	gboolean visible;
+
+	if (statusbar->window == NULL)
+	{
+		return;
+	}
+
+	if (_gedit_window_is_fullscreen (statusbar->window))
+	{
+		gtk_widget_hide (GTK_WIDGET (statusbar));
+		return;
+	}
+
+	settings = _gedit_settings_get_singleton ();
+	ui_settings = _gedit_settings_peek_ui_settings (settings);
+
+	visible = g_settings_get_boolean (ui_settings, GEDIT_SETTINGS_STATUSBAR_VISIBLE);
+	gtk_widget_set_visible (GTK_WIDGET (statusbar), visible);
+}
+
+static void
+statusbar_visible_setting_changed_cb (GSettings   *ui_settings,
+				      const gchar *key,
+				      gpointer     user_data)
+{
+	GeditStatusbar *statusbar = GEDIT_STATUSBAR (user_data);
+	update_visibility (statusbar);
+}
+
+static gboolean
+window_state_event_cb (GtkWidget *window,
+		       GdkEvent  *event,
+		       gpointer   user_data)
+{
+	GeditStatusbar *statusbar = GEDIT_STATUSBAR (user_data);
+	GdkEventWindowState *event_window_state = (GdkEventWindowState *) event;
+
+	if (event_window_state->changed_mask & GDK_WINDOW_STATE_FULLSCREEN)
+	{
+		update_visibility (statusbar);
+	}
+
+	return GDK_EVENT_PROPAGATE;
+}
+
+static void
 gedit_statusbar_dispose (GObject *object)
 {
 	GeditStatusbar *statusbar = GEDIT_STATUSBAR (object);
+
+	g_clear_weak_pointer (&statusbar->window);
 
 	if (statusbar->flash_timeout > 0)
 	{
@@ -63,41 +109,57 @@ static void
 gedit_statusbar_class_init (GeditStatusbarClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-	GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
 
 	object_class->dispose = gedit_statusbar_dispose;
-
-	gtk_widget_class_set_template_from_resource (widget_class,
-		                                    "/org/gnome/gedit/ui/gedit-statusbar.ui");
-
-	gtk_widget_class_bind_template_child (widget_class, GeditStatusbar, error_frame);
-	gtk_widget_class_bind_template_child (widget_class, GeditStatusbar, error_image);
-	gtk_widget_class_bind_template_child (widget_class, GeditStatusbar, state_frame);
-	gtk_widget_class_bind_template_child (widget_class, GeditStatusbar, load_image);
-	gtk_widget_class_bind_template_child (widget_class, GeditStatusbar, save_image);
-	gtk_widget_class_bind_template_child (widget_class, GeditStatusbar, print_image);
 }
 
 static void
 gedit_statusbar_init (GeditStatusbar *statusbar)
 {
-	gtk_widget_init_template (GTK_WIDGET (statusbar));
-
 	statusbar->generic_message_context_id =
 		gtk_statusbar_get_context_id (GTK_STATUSBAR (statusbar), "generic_message");
+
+	tepl_utils_setup_statusbar (GTK_STATUSBAR (statusbar));
 }
 
-/**
- * gedit_statusbar_new:
- *
- * Creates a new #GeditStatusbar.
- *
- * Return value: the new #GeditStatusbar object
- */
-GtkWidget *
-gedit_statusbar_new (void)
+GeditStatusbar *
+_gedit_statusbar_new (void)
 {
 	return g_object_new (GEDIT_TYPE_STATUSBAR, NULL);
+}
+
+/* TODO: remove this function, and take a GeditWindow parameter in new().
+ * This requires to create the statusbar in code, not in a *.ui file.
+ */
+void
+_gedit_statusbar_set_window (GeditStatusbar *statusbar,
+			     GeditWindow    *window)
+{
+	GeditSettings *settings;
+	GSettings *ui_settings;
+
+	g_return_if_fail (GEDIT_IS_STATUSBAR (statusbar));
+	g_return_if_fail (GEDIT_IS_WINDOW (window));
+	g_return_if_fail (statusbar->window == NULL);
+
+	g_set_weak_pointer (&statusbar->window, window);
+
+	settings = _gedit_settings_get_singleton ();
+	ui_settings = _gedit_settings_peek_ui_settings (settings);
+
+	g_signal_connect_object (ui_settings,
+				 "changed::" GEDIT_SETTINGS_STATUSBAR_VISIBLE,
+				 G_CALLBACK (statusbar_visible_setting_changed_cb),
+				 statusbar,
+				 G_CONNECT_DEFAULT);
+
+	g_signal_connect_object (window,
+				 "window-state-event",
+				 G_CALLBACK (window_state_event_cb),
+				 statusbar,
+				 G_CONNECT_AFTER);
+
+	update_visibility (statusbar);
 }
 
 static gboolean
@@ -189,53 +251,6 @@ _gedit_statusbar_flash_generic_message (GeditStatusbar *statusbar,
 	flash_text (statusbar, statusbar->generic_message_context_id, text);
 
 	g_free (text);
-}
-
-void
-gedit_statusbar_set_window_state (GeditStatusbar   *statusbar,
-				  GeditWindowState  state,
-				  gint              num_of_errors)
-{
-	g_return_if_fail (GEDIT_IS_STATUSBAR (statusbar));
-
-	gtk_widget_hide (statusbar->state_frame);
-	gtk_widget_hide (statusbar->save_image);
-	gtk_widget_hide (statusbar->load_image);
-	gtk_widget_hide (statusbar->print_image);
-
-	if (state & GEDIT_WINDOW_STATE_SAVING)
-	{
-		gtk_widget_show (statusbar->state_frame);
-		gtk_widget_show (statusbar->save_image);
-	}
-	if (state & GEDIT_WINDOW_STATE_LOADING)
-	{
-		gtk_widget_show (statusbar->state_frame);
-		gtk_widget_show (statusbar->load_image);
-	}
-	if (state & GEDIT_WINDOW_STATE_PRINTING)
-	{
-		gtk_widget_show (statusbar->state_frame);
-		gtk_widget_show (statusbar->print_image);
-	}
-	if (state & GEDIT_WINDOW_STATE_ERROR)
-	{
-	 	gchar *tip;
-
- 		tip = g_strdup_printf (ngettext("There is a tab with errors",
-		                                "There are %d tabs with errors",
-		                                num_of_errors),
-		                       num_of_errors);
-
-		gtk_widget_set_tooltip_text (statusbar->error_image, tip);
-		g_free (tip);
-
-		gtk_widget_show (statusbar->error_frame);
-	}
-	else
-	{
-		gtk_widget_hide (statusbar->error_frame);
-	}
 }
 
 /* ex:set ts=8 noet: */

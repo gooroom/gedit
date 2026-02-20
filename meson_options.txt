@@ -21,4 +21,13 @@ option(
   description: 'Build user documentation'
 )
 
-option('plugin_externaltools', type: 'boolean', value: true)
+# Whether to have a GtkHeaderBar (instead of the default window titlebar).
+# 'auto' will choose a value depending on the platform.
+# 'yes' and 'no' permit to force a certain value (useful for testing purposes).
+option(
+  'headerbar',
+  type: 'combo',
+  choices: ['yes', 'no', 'auto'],
+  value: 'auto',
+  description: 'Have a GtkHeaderBar'
+)
