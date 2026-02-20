@@ -1,4 +1,4 @@
-gedit (48.1-4+grm5u2) gooroom-5.0-unstable; urgency=medium
+gedit (48.1-4+grm5~alpha1) gooroom-5.0-unstable; urgency=medium
 
   [ Gooroom ]
   * Fix source build: restore upstream files to unpatched state
