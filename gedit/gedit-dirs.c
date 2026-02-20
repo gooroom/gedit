@@ -30,7 +30,6 @@ static gchar *user_plugins_dir = NULL;
 static gchar *gedit_locale_dir = NULL;
 static gchar *gedit_lib_dir = NULL;
 static gchar *gedit_plugins_dir = NULL;
-static gchar *gedit_fallback_plugins_dir = NULL;
 static gchar *gedit_plugins_data_dir = NULL;
 
 void
@@ -103,9 +102,6 @@ gedit_dirs_init (void)
 	gedit_plugins_dir = g_build_filename (gedit_lib_dir,
 					      "plugins",
 					      NULL);
-	gedit_fallback_plugins_dir = g_build_filename ("/usr/lib/gedit",
-					      "plugins",
-					      NULL);
 }
 
 void
@@ -117,7 +113,6 @@ gedit_dirs_shutdown (void)
 	g_clear_pointer (&gedit_locale_dir, g_free);
 	g_clear_pointer (&gedit_lib_dir, g_free);
 	g_clear_pointer (&gedit_plugins_dir, g_free);
-	g_clear_pointer (&gedit_fallback_plugins_dir, g_free);
 	g_clear_pointer (&gedit_plugins_data_dir, g_free);
 }
 
@@ -155,12 +150,6 @@ const gchar *
 gedit_dirs_get_gedit_plugins_dir (void)
 {
 	return gedit_plugins_dir;
-}
-
-const gchar *
-gedit_dirs_get_gedit_fallback_plugins_dir (void)
-{
-	return gedit_fallback_plugins_dir;
 }
 
 const gchar *

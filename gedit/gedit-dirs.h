@@ -43,8 +43,6 @@ const gchar *	gedit_dirs_get_gedit_lib_dir		(void);
 
 const gchar *	gedit_dirs_get_gedit_plugins_dir	(void);
 
-const gchar *	gedit_dirs_get_gedit_fallback_plugins_dir (void);
-
 const gchar *	gedit_dirs_get_gedit_plugins_data_dir	(void);
 
 G_END_DECLS

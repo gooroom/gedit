@@ -93,11 +93,6 @@ gedit_plugins_engine_init (GeditPluginsEngine *engine)
 	                             gedit_dirs_get_gedit_plugins_dir (),
 	                             gedit_dirs_get_gedit_plugins_data_dir ());
 
-	peas_engine_add_search_path (PEAS_ENGINE (engine),
-	                             gedit_dirs_get_gedit_fallback_plugins_dir (),
-	                             gedit_dirs_get_gedit_plugins_data_dir ());
-
-
 	g_settings_bind (engine->plugin_settings,
 	                 GEDIT_SETTINGS_ACTIVE_PLUGINS,
 	                 engine,

@@ -1,3 +1,11 @@
+gedit (48.1-4+grm5u2) gooroom-5.0-unstable; urgency=medium
+
+  [ Gooroom ]
+  * Fix source build: restore upstream files to unpatched state
+  * Quilt patches must not be pre-applied in git tree
+
+ -- jongkyung.woo <jkwoo@gooroom.kr>  Thu, 20 Feb 2026 20:30:00 +0900
+
 gedit (48.1-4+grm5u1) gooroom-5.0-unstable; urgency=medium
 
   [ Gooroom ]
