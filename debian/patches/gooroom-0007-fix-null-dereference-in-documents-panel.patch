@@ -1,0 +1,25 @@
+Index: gedit.git/gedit/gedit-documents-panel.c
+===================================================================
+--- gedit.git.orig/gedit/gedit-documents-panel.c
++++ gedit.git/gedit/gedit-documents-panel.c
+@@ -584,6 +584,9 @@ multi_notebook_tab_removed (GeditMultiNo
+ 
+ 	row = get_row_from_widget (panel, GTK_WIDGET (tab));
+ 
++	if (!row)
++		return;
++
+ 	/* Disconnect before destroy it so document_row_sync_tab_name_and_icon()
+ 	 * don't get invalid data */
+ 	g_signal_handlers_disconnect_by_func (GEDIT_DOCUMENTS_DOCUMENT_ROW (row)->ref,
+@@ -667,6 +670,10 @@ multi_notebook_notebook_removed (GeditMu
+ 	gedit_debug (DEBUG_PANEL);
+ 
+ 	row = get_row_from_widget (panel, GTK_WIDGET (notebook));
++
++	if (!row)
++		return;
++
+ 	gtk_container_remove (GTK_CONTAINER (panel->listbox), GTK_WIDGET (row));
+ 
+ 	panel->nb_row_notebook -= 1;

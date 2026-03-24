@@ -4,3 +4,5 @@ gooroom-0002-make-help-menu-flexible.patch
 gooroom-0003-add-print-error-dialog.patch
 gooroom-0004-only-one-help-menu.patch
 gooroom-0005-clear-headerbar-title.patch
+gooroom-0006-update-korean-desktop-name.patch
+gooroom-0007-fix-null-dereference-in-documents-panel.patch

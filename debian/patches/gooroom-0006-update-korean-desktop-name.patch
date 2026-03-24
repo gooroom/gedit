@@ -1,0 +1,135 @@
+Description: Change Korean desktop name from 지에디트 to 텍스트 편집기
+ The transliteration "지에디트" is uncommon and confusing for Korean users.
+ Change the displayed application name to the descriptive "텍스트 편집기".
+ intltool-merge generates Name[ko] from ko.po automatically.
+Author: jongkyung.woo <jkwoo@gooroom.kr>
+
+Index: gedit.git/po/ko.po
+===================================================================
+--- gedit.git.orig/po/ko.po
++++ gedit.git/po/ko.po
+@@ -10,9 +10,7 @@
+ #
+ # 주의:
+ # - gedit-plugins 번역과 일관성 유지
+-# - 이 프로그램의 이름인 gedit는 "지에디트"로 음역
+-#   - 오류 메시지에서 gedit가 주어가 되는 경우가 많은데 이 경우 뜻이
+-#     통하는 경우 생략한다. "지에디트가 ..." 식으로 번역하지 않는다.
++# - 앱 이름은 "텍스트 편집기"로 번역 (메뉴/데스크톱 표시용)
+ # - 용어
+ #   - indentation - 들여쓰기 (공백 없이)
+ msgid ""
+@@ -31,7 +29,7 @@ msgstr ""
+ 
+ #: data/org.gnome.gedit.appdata.xml.in:7 data/org.gnome.gedit.desktop.in:3
+ msgid "gedit"
+-msgstr "지에디트"
++msgstr "텍스트 편집기"
+ 
+ #: data/org.gnome.gedit.appdata.xml.in:8
+ msgid "Text editor"
+@@ -41,14 +39,14 @@ msgstr "텍스트 편집기"
+ msgid ""
+ "gedit is a general-purpose text editor. It has been created in 1998, at the "
+ "beginnings of GNOME."
+-msgstr "지에디트는 일반적인 목적의 텍스트 편집기입니다. 그놈 데스크톱이 시작한 1998년에 처음 만들었습니다."
++msgstr "텍스트 편집기는 일반적인 목적의 텍스트 편집기입니다. GNOME 데스크톱이 시작한 1998년에 처음 만들었습니다."
+ 
+ #: data/org.gnome.gedit.appdata.xml.in:14
+ msgid ""
+ "The first goal of gedit is to be easy to use, with a simple interface by "
+ "default. More advanced features are available by enabling plugins."
+ msgstr ""
+-"지에디트의 첫번째 목표는 사용하기 쉽게 하는 것으로, 기본값으로는 간단한 인터"
++"텍스트 편집기의 첫번째 목표는 사용하기 쉽게 하는 것으로, 기본값으로는 간단한 인터"
+ "페이스만 있습니다. 플러그인을 사용하면 추가 고급 기능을 사용할 수 있습니다."
+ 
+ #: data/org.gnome.gedit.desktop.in:4
+@@ -60,8 +58,8 @@ msgstr "텍스트 파일을 편집합니
+ #: data/org.gnome.gedit.desktop.in:15
+ msgid "Text;Editor;Plaintext;Write;gedit;"
+ msgstr ""
+-"Text;텍스트;Editor;편집기;Plaintext;일반텍스트;Write;글쓰기;작성;gedit;지에디"
+-"트;"
++"Text;텍스트;Editor;편집기;Plaintext;일반텍스트;Write;글쓰기;작성;gedit;텍스트편"
++"집기;"
+ 
+ #: data/org.gnome.gedit.desktop.in:19
+ msgid "New Window"
+@@ -82,7 +80,7 @@ msgid ""
+ "font named in the “Editor Font” option will be used instead of the system "
+ "font."
+ msgstr ""
+-"편집 영역에 지에디트에서 지정한 글꼴 대신 시스템의 기본 고정폭 글꼴을 씁니"
++"편집 영역에 텍스트 편집기에서 지정한 글꼴 대신 시스템의 기본 고정폭 글꼴을 씁니"
+ "다. 이 옵션이 꺼져 있으면 시스템 글꼴 대신 “편집기 글꼴” 옵션의 글꼴을 씁니"
+ "다."
+ 
+@@ -140,7 +138,7 @@ msgid ""
+ "Number of minutes after which gedit will automatically save modified files. "
+ "This will only take effect if the “Autosave” option is turned on."
+ msgstr ""
+-"지에디트에서 바뀐 파일을 자동으로 저장하는 시간입니다. “자동 저장” 옵션이 켜"
++"텍스트 편집기에서 바뀐 파일을 자동으로 저장하는 시간입니다. “자동 저장” 옵션이 켜"
+ "져 있어야만 적용됩니다."
+ 
+ #: data/org.gnome.gedit.gschema.xml.in:68
+@@ -152,7 +150,7 @@ msgid ""
+ "Maximum number of actions that gedit will be able to undo or redo. Use “-1” "
+ "for unlimited number of actions."
+ msgstr ""
+-"지에디트에서 실행 취소나 다시 실행을 할 수 있는 최대 회수. “-1”이면 무제한."
++"텍스트 편집기에서 실행 취소나 다시 실행을 할 수 있는 최대 회수. “-1”이면 무제한."
+ 
+ #: data/org.gnome.gedit.gschema.xml.in:78
+ msgid "Line Wrapping Mode"
+@@ -225,7 +223,7 @@ msgstr "현재 줄 강조"
+ 
+ #: data/org.gnome.gedit.gschema.xml.in:114
+ msgid "Whether gedit should highlight the current line."
+-msgstr "지에디트에서 현재 줄을 강조할지 여부."
++msgstr "텍스트 편집기에서 현재 줄을 강조할지 여부."
+ 
+ #: data/org.gnome.gedit.gschema.xml.in:118
+ msgid "Highlight Matching Brackets"
+@@ -233,7 +231,7 @@ msgstr "일치하는 대괄호 강조"
+ 
+ #: data/org.gnome.gedit.gschema.xml.in:119
+ msgid "Whether gedit should highlight matching brackets."
+-msgstr "지에디트에서 일치하는 대괄호를 강조할지 여부."
++msgstr "텍스트 편집기에서 일치하는 대괄호를 강조할지 여부."
+ 
+ #: data/org.gnome.gedit.gschema.xml.in:123
+ msgid "Display Right Margin"
+@@ -520,11 +518,11 @@ msgstr "<인코딩>"
+ 
+ #: gedit/gedit-app.c:103
+ msgid "Create a new top-level window in an existing instance of gedit"
+-msgstr "실행 중인 지에디트 인스턴스에서 새로운 최상위 창을 만듭니다"
++msgstr "실행 중인 텍스트 편집기에서 새로운 최상위 창을 만듭니다"
+ 
+ #: gedit/gedit-app.c:110
+ msgid "Create a new document in an existing instance of gedit"
+-msgstr "실행 중인 지에디트 인스턴스에서 새로운 문서를 만듭니다"
++msgstr "실행 중인 텍스트 편집기에서 새로운 문서를 만듭니다"
+ 
+ #: gedit/gedit-app.c:117
+ msgid "Open files and block process until files are closed"
+@@ -812,7 +810,7 @@ msgstr "및 기타 수많은 기여자�
+ 
+ #: gedit/gedit-commands-help.c:89
+ msgid "gedit is an easy-to-use and general-purpose text editor"
+-msgstr "지에디트는 사용하기 쉬운 일반적인 목적의 텍스트 편집기입니다"
++msgstr "텍스트 편집기는 사용하기 쉬운 일반적인 목적의 텍스트 편집기입니다"
+ 
+ #: gedit/gedit-commands-help.c:94
+ msgid "translator-credits"
+@@ -1939,7 +1937,7 @@ msgstr "도움말(_H)"
+ #: gedit/resources/gtk/menus-traditional.ui:123
+ #: gedit/resources/gtk/menus.ui:127
+ msgid "_About gedit"
+-msgstr "지에디트 정보(_A)"
++msgstr "텍스트 편집기 정보(_A)"
+ 
+ #: gedit/resources/gtk/menus-traditional.ui:37 gedit/resources/gtk/menus.ui:41
+ msgid "Save _All"
