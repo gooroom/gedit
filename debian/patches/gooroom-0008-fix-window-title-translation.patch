@@ -1,0 +1,19 @@
+Description: Fix window title to use translatable "Text Editor" string
+ Replace g_set_application_name("gedit") with _("Text Editor") so that
+ the existing ko.po translation ("텍스트 편집기") applies to the window
+ title bar at runtime.
+Author: gooroom <gooroom@eactive.co.kr>
+
+Index: gedit.git/gedit/gedit-app.c
+===================================================================
+--- gedit.git.orig/gedit/gedit-app.c
++++ gedit.git/gedit/gedit-app.c
+@@ -1289,7 +1289,7 @@ gedit_app_init (GeditApp *app)
+ {
+ 	TeplApplication *tepl_app;
+ 
+-	g_set_application_name ("gedit");
++	g_set_application_name (_("Text Editor"));
+ 	gtk_window_set_default_icon_name ("org.gnome.gedit");
+ 
+ 	g_application_add_main_option_entries (G_APPLICATION (app), option_entries);
